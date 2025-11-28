@@ -15,12 +15,12 @@ public class Main {
     static Profile profile;
     static Registration registration;
 
-    private static void userRegistration(String username, String password, String first_name,
-                                         String last_name, String email, String phone, String gender) {
+    private static void userRegistration(String first_name, String last_name, String email, String phone,
+                                         String password, String gender) {
         try {
             statement = connection.createStatement();
-            String insertQuery = String.format("INSERT INTO members (username, password, first_name, last_name, email, phone, gender) " +
-                    "VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s');", username, password, first_name, last_name, email, phone, gender);
+            String insertQuery = String.format("INSERT INTO members (first_name, last_name, email, phone, password, gender) " +
+                    "VALUES ('%s', '%s', '%s', '%s', '%s', '%s');", first_name, last_name, email, phone, password, gender);
             statement.executeUpdate(insertQuery);
             System.out.println("=====Registration successful======");
         } catch (Exception e) {
@@ -28,11 +28,11 @@ public class Main {
         }
     }
 
-    private static int userLogin(String username, String password) {
+    private static int userLogin(String email, String password) {
         int member_id = 0;
         try {
             statement = connection.createStatement();
-            String query = String.format("SELECT * FROM members WHERE username = '%s' AND password = '%s;", username, password);
+            String query = String.format("SELECT * FROM members WHERE email = '%s' AND password = '%s;", email, password);
             ResultSet resultSet = statement.executeQuery(query);
             member_id = resultSet.getInt("member_id");
             System.out.println("=====Login successful======");
@@ -44,7 +44,7 @@ public class Main {
 
     private static void menuOptions() {
         System.out.print("MENU OPTIONS\n");
-        System.out.println("1. Registration");
+        System.out.println("1. New Profile Registration");
         System.out.println("2. Login");
         System.out.println("3. Exit Program");
 
@@ -52,11 +52,7 @@ public class Main {
         int choice = scanner.nextInt();
         int member_id;
         switch (choice) {
-            case 1: // registration
-                System.out.print("Enter username: ");
-                String username = scanner.next();
-                System.out.print("Enter password: ");
-                String password = scanner.next();
+            case 1: // new profile registration
                 System.out.print("Enter first name: ");
                 String first_name = scanner.next();
                 System.out.print("Enter last name: ");
@@ -65,16 +61,18 @@ public class Main {
                 String email = scanner.next();
                 System.out.print("Enter phone: ");
                 String phone = scanner.next();
+                System.out.print("Enter password: ");
+                String password = scanner.next();
                 System.out.print("Enter gender: ");
                 String gender = scanner.next();
-                userRegistration(username, password, first_name, last_name, email, phone, gender);
+                userRegistration(first_name, last_name, email, phone, password, gender);
                 break;
             case 2: // login
-                System.out.print("Enter username: ");
-                String usernameLogin = scanner.next();
+                System.out.print("Enter email: ");
+                String emailLogin = scanner.next();
                 System.out.print("Enter password: ");
                 String passwordLogin = scanner.next();
-                member_id = userLogin(usernameLogin, passwordLogin);
+                member_id = userLogin(emailLogin, passwordLogin);
                 profileOptions(member_id);
                 break;
             case 3: // exit

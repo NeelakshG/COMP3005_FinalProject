@@ -10,54 +10,49 @@ public class Profile {
     // selects update profile
     public static void updateInformationDisplay(int member_id) {
         System.out.print("WHAT INFORMATION TO UPDATE\n");
-        System.out.println("1. Update Username");
+        System.out.println("1. Update Email");
         System.out.println("2. Update Password");
-        System.out.println("3. Update Email");
-        System.out.println("4. Update Phone Number");
-        System.out.println("5. Update Fitness Goals");
-        System.out.println("6. Update Health Metrics");
+        System.out.println("3. Update Phone Number");
+        System.out.println("4. Update Fitness Goals");
+        System.out.println("5. Update Health Metrics");
 
         System.out.print("Enter menu option: ");
         int choice = scanner.nextInt();
 
         switch (choice) {
-            case 1: // username
-                System.out.print("Enter new username: ");
-                String new_username = scanner.next();
-                updateUsername(member_id, new_username);
+
+            case 1: // email
+                System.out.print("Enter new email: ");
+                String new_email = scanner.next();
+                updateEmail(member_id, new_email);
                 break;
             case 2: // password
                 System.out.print("Enter new password: ");
                 String new_password = scanner.next();
                 updatePassword(member_id, new_password);
                 break;
-            case 3: // email
-                System.out.print("Enter new email: ");
-                String new_email = scanner.next();
-                updateEmail(member_id, new_email);
-                break;
-            case 4: // phone number
+            case 3: // phone number
                 System.out.print("Enter new phone number: ");
                 String new_phone = scanner.next();
                 updatePhone(member_id, new_phone);
                 break;
-            case 5: // fitness goals
+            case 4: // fitness goals
                 fitnessGoals(member_id);
 
                 break;
-            case 6: // health metrics
+            case 5: // health metrics
                 healthMetrics(member_id);
         }
     }
 
-    // update username
-    private static void updateUsername(int member_id, String new_username) {
+    // update email
+    private static void updateEmail(int member_id, String new_email) {
         try {
             statement = connection.createStatement();
             String updateQuery = String.format("UPDATE members " +
-                    "SET username = '%s' WHERE member_id = %d;", new_username, member_id);
+                    "SET email = '%s' WHERE member_id = %d;", new_email, member_id);
             statement.executeUpdate(updateQuery);
-            System.out.println("=====Username update successful======");
+            System.out.println("=====Email update successful======");
         } catch  (Exception e) {
             System.out.println(e);
         }
@@ -71,19 +66,6 @@ public class Profile {
                     "SET password = '%s' WHERE member_id = %d;", new_password, member_id);
             statement.executeUpdate(updateQuery);
             System.out.println("=====Password update successful======");
-        } catch  (Exception e) {
-            System.out.println(e);
-        }
-    }
-
-    // update email
-    private static void updateEmail(int member_id, String new_email) {
-        try {
-            statement = connection.createStatement();
-            String updateQuery = String.format("UPDATE members " +
-                    "SET email = '%s' WHERE member_id = %d;", new_email, member_id);
-            statement.executeUpdate(updateQuery);
-            System.out.println("=====Email update successful======");
         } catch  (Exception e) {
             System.out.println(e);
         }
