@@ -49,7 +49,7 @@ public class Main {
         int choice = scanner.nextInt();
         int member_id;
         switch (choice) {
-            case 1:
+            case 1: // registration
                 System.out.print("Enter username: ");
                 String username = scanner.next();
                 System.out.print("Enter password: ");
@@ -66,7 +66,7 @@ public class Main {
                 String gender = scanner.next();
                 userRegistration(username, password, first_name, last_name, email, phone, gender);
                 break;
-            case 2:
+            case 2: // login
                 System.out.print("Enter username: ");
                 String usernameLogin = scanner.next();
                 System.out.print("Enter password: ");
@@ -74,15 +74,16 @@ public class Main {
                 member_id = userLogin(usernameLogin, passwordLogin);
                 profileOptions(member_id);
                 break;
-            case 3:
+            case 3: // exit
                 return;
         }
     }
 
+    // logged in options
     private static void profileOptions(int member_id) {
         System.out.print("PROFILE OPTIONS\n");
-        System.out.println("1. Update Profile");
-        System.out.println("2. View Profile");
+        System.out.println("1. Update Profile Information");
+        System.out.println("2. View Profile Information");
         System.out.println("3. Logout");
 
         System.out.print("Enter menu option: ");
@@ -98,6 +99,7 @@ public class Main {
         }
     }
 
+    // selects update profile
     private static void updateInformationDisplay(int member_id) {
         System.out.print("WHAT INFORMATION TO UPDATE\n");
         System.out.println("1. Update Username");
@@ -111,33 +113,36 @@ public class Main {
         int choice = scanner.nextInt();
 
         switch (choice) {
-            case 1:
+            case 1: // username
                 System.out.print("Enter new username: ");
                 String new_username = scanner.next();
                 updateUsername(member_id, new_username);
                 break;
-            case 2:
+            case 2: // password
                 System.out.print("Enter new password: ");
                 String new_password = scanner.next();
                 updatePassword(member_id, new_password);
                 break;
-            case 3:
+            case 3: // email
                 System.out.print("Enter new email: ");
                 String new_email = scanner.next();
                 updateEmail(member_id, new_email);
                 break;
-            case 4:
+            case 4: // phone number
                 System.out.print("Enter new phone number: ");
                 String new_phone = scanner.next();
                 updatePhone(member_id, new_phone);
                 break;
-            case 5:
+            case 5: // fitness goals
+                fitnessGoals(member_id);
 
                 break;
-            case 6:
+            case 6: // health metrics
+                healthMetrics(member_id);
         }
     }
 
+    // update username
     private static void updateUsername(int member_id, String new_username) {
         try {
             statement = connection.createStatement();
@@ -149,6 +154,8 @@ public class Main {
             System.out.println(e);
         }
     }
+
+    // update password
     private static void updatePassword(int member_id, String new_password) {
         try {
             statement = connection.createStatement();
@@ -160,6 +167,8 @@ public class Main {
             System.out.println(e);
         }
     }
+
+    // update email
     private static void updateEmail(int member_id, String new_email) {
         try {
             statement = connection.createStatement();
@@ -172,6 +181,7 @@ public class Main {
         }
     }
 
+    // update phone number
     private static void updatePhone(int member_id, String new_phone) {
         try {
             statement = connection.createStatement();
@@ -183,6 +193,91 @@ public class Main {
             System.out.println(e);
         }
     }
+
+    // update fitness goals
+    private static void fitnessGoals(int member_id) {
+        System.out.println("1. Add Fitness Goals");
+        System.out.println("2. Update Fitness Goals");
+        System.out.print("Select Option: ");
+        int  choice = scanner.nextInt();
+        scanner.nextLine();
+
+        switch (choice) {
+            case 1: // add fitness goal
+                System.out.println("Enter target weight: ");
+                int target_weight = scanner.nextInt();
+                scanner.nextLine();
+                System.out.println("Enter start date: ");
+                String start_date = scanner.next();
+                scanner.nextLine();
+                System.out.println("Enter end_date: ");
+                String end_date = scanner.next();
+                scanner.nextLine();
+                System.out.println("Enter status: ");
+                String status = scanner.next();
+                scanner.nextLine();
+                addFitnessGoals(member_id, target_weight, start_date, end_date, status);
+                break;
+            case 2: // update fitness goal
+        }
+    }
+
+    private static void addFitnessGoals(int member_id, int target_weight, String start_date, String end_date, String status) {
+        try {
+            statement = connection.createStatement();
+            String insertQuery = String.format("INSERT INTO fitnessGoal (member_id, target_weight, start_date, end_state, status)" +
+                    "VALUES ('%d', '%s', '%s', '%s', '%s');", member_id, target_weight, start_date, end_date, status);
+            statement.executeUpdate(insertQuery);
+            System.out.println("=====Fitness goal insert successful======");
+        } catch  (Exception e) {
+            System.out.println(e);
+        }
+    }
+
+    private static void updateFitnessGoals() {
+
+    }
+
+    private static void healthMetrics(int member_id) {
+        System.out.println("1. Set health metrics");
+        System.out.println("2. Update health metrics");
+        System.out.print("Select Option: ");
+        int  choice = scanner.nextInt();
+        scanner.nextLine();
+
+        switch (choice) {
+            case 1: // set health metrics
+                System.out.println("Enter weight: ");
+                int weight = scanner.nextInt();
+                scanner.nextLine();
+                System.out.println("Enter heartrate: ");
+                int heartrate = scanner.nextInt();
+                scanner.nextLine();
+                System.out.println("Enter bodyfat percentage: ");
+                int bodyfat_percentage = scanner.nextInt();
+                scanner.nextLine();
+                setHealthMetrics(member_id, weight, heartrate, bodyfat_percentage);
+                break;
+            case 2: // update health metrics
+        }
+    }
+
+    private static void setHealthMetrics(int member_id, int weight, int heartrate, int bodyfat_percentage) {
+        try {
+            statement = connection.createStatement();
+            String insertQuery = String.format("INSERT INTO HealthMetric (member_id, target_weight, start_date, end_state, status)" +
+                    "VALUES ('%d', '%s', '%s', '%s', '%s');", member_id, weight, heartrate, bodyfat_percentage);
+            statement.executeUpdate(insertQuery);
+            System.out.println("=====Health metric set successful======");
+        } catch  (Exception e) {
+            System.out.println(e);
+        }
+    }
+
+    private static void updateHealthMetrics() {
+
+    }
+
 
 
     public static void main(String[] args) {
