@@ -19,7 +19,7 @@ public class Main {
                                          String password, String gender) {
         try {
             statement = connection.createStatement();
-            String insertQuery = String.format("INSERT INTO members (first_name, last_name, email, phone, password, gender) " +
+            String insertQuery = String.format("INSERT INTO Member (first_name, last_name, email, phone, password, gender) " +
                     "VALUES ('%s', '%s', '%s', '%s', '%s', '%s');", first_name, last_name, email, phone, password, gender);
             statement.executeUpdate(insertQuery);
             System.out.println("=====Registration successful======");
@@ -32,7 +32,7 @@ public class Main {
         int member_id = 0;
         try {
             statement = connection.createStatement();
-            String query = String.format("SELECT * FROM members WHERE email = '%s' AND password = '%s;", email, password);
+            String query = String.format("SELECT * FROM Member WHERE email = '%s' AND password = '%s;", email, password);
             ResultSet resultSet = statement.executeQuery(query);
             member_id = resultSet.getInt("member_id");
             System.out.println("=====Login successful======");

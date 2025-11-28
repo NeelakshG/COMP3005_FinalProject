@@ -49,7 +49,7 @@ public class Profile {
     private static void updateEmail(int member_id, String new_email) {
         try {
             statement = connection.createStatement();
-            String updateQuery = String.format("UPDATE members " +
+            String updateQuery = String.format("UPDATE Member " +
                     "SET email = '%s' WHERE member_id = %d;", new_email, member_id);
             statement.executeUpdate(updateQuery);
             System.out.println("=====Email update successful======");
@@ -62,7 +62,7 @@ public class Profile {
     private static void updatePassword(int member_id, String new_password) {
         try {
             statement = connection.createStatement();
-            String updateQuery = String.format("UPDATE members " +
+            String updateQuery = String.format("UPDATE Member " +
                     "SET password = '%s' WHERE member_id = %d;", new_password, member_id);
             statement.executeUpdate(updateQuery);
             System.out.println("=====Password update successful======");
@@ -75,7 +75,7 @@ public class Profile {
     private static void updatePhone(int member_id, String new_phone) {
         try {
             statement = connection.createStatement();
-            String updateQuery = String.format("UPDATE members " +
+            String updateQuery = String.format("UPDATE Member " +
                     "SET phone = '%s' WHERE member_id = %d;", new_phone, member_id);
             statement.executeUpdate(updateQuery);
             System.out.println("=====Phone number update successful======");
@@ -118,7 +118,7 @@ public class Profile {
     private static void addFitnessGoals(int member_id, String goal_type, int target_weight, String start_date, String end_date, String status) {
         try {
             statement = connection.createStatement();
-            String insertQuery = String.format("INSERT INTO fitnessGoal (member_id, goal_type, target_weight, start_date, end_state, status)" +
+            String insertQuery = String.format("INSERT INTO FitnessGoal (member_id, goal_type, target_weight, start_date, end_state, status)" +
                     "VALUES ('%d', '%s', '%s', '%s', '%s');", member_id, goal_type, target_weight, start_date, end_date, status);
             statement.executeUpdate(insertQuery);
             System.out.println("=====Fitness goal insert successful======");
@@ -158,7 +158,7 @@ public class Profile {
     private static void setHealthMetrics(int member_id, int weight, int heartrate, int bodyfat_percentage) {
         try {
             statement = connection.createStatement();
-            String insertQuery = String.format("INSERT INTO healthMetric (member_id, target_weight, start_date, end_state, status)" +
+            String insertQuery = String.format("INSERT INTO HealthMetrics (member_id, target_weight, start_date, end_state, status)" +
                     "VALUES ('%d', '%s', '%s', '%s', '%s');", member_id, weight, heartrate, bodyfat_percentage);
             statement.executeUpdate(insertQuery);
             System.out.println("=====Health metric set successful======");
@@ -209,7 +209,7 @@ public class Profile {
 
         try {
             statement = connection.createStatement();
-            statement.executeQuery("SELECT * FROM members WHERE member_id = " + member_id);
+            statement.executeQuery("SELECT * FROM Member WHERE member_id = " + member_id);
             resultSet = statement.getResultSet();
             resultSetMetaData = resultSet.getMetaData();
             int colWidth = 30;
