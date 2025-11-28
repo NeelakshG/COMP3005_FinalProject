@@ -48,11 +48,11 @@ CREATE TABLE Class (
 CREATE TABLE FitnessGoal (
     goal_id       SERIAL PRIMARY KEY,
     member_id     INT REFERENCES Member(member_id) ON DELETE CASCADE,
+    goal_type     VARCHAR(50),
     target_weight NUMERIC(5,2),
     start_date    DATE,
     end_date      DATE,
-    status        VARCHAR(50),
-    goal_type     VARCHAR(50)
+    status        VARCHAR(50)
 );
 
 

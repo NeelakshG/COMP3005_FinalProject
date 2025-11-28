@@ -238,7 +238,7 @@ public class Profile {
 
         try {
             statement = connection.createStatement();
-            statement.executeQuery("SELECT * FROM fitnessGoals WHERE member_id = " + member_id);
+            statement.executeQuery("SELECT * FROM FitnessGoal WHERE member_id = " + member_id);
             resultSet = statement.getResultSet();
             resultSetMetaData = resultSet.getMetaData();
             int colWidth = 30;
@@ -267,7 +267,7 @@ public class Profile {
 
         try {
             statement = connection.createStatement();
-            statement.executeQuery("SELECT * FROM healthMetrics WHERE member_id = " + member_id);
+            statement.executeQuery("SELECT * FROM HealthMetrics WHERE member_id = " + member_id);
             resultSet = statement.getResultSet();
             resultSetMetaData = resultSet.getMetaData();
             int colWidth = 30;
@@ -280,7 +280,8 @@ public class Profile {
                 System.out.printf("%-" + colWidth + "s ", resultSet.getInt("metric_id"));
                 System.out.printf("%-" + colWidth + "s ", resultSet.getString("weight"));
                 System.out.printf("%-" + colWidth + "s ", resultSet.getString("heartrate"));
-                System.out.printf("%-" + colWidth + "s ", resultSet.getString("bodyfat_percentage"));
+                System.out.printf("%-" + colWidth + "s ", resultSet.getString("body_fat_percentage"));
+                System.out.printf("%-" + colWidth + "s ", resultSet.getString("recorded_at"));
 
             }
         } catch (Exception e) {
