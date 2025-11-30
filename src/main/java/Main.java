@@ -1,124 +1,132 @@
 import java.sql.*;
 import java.util.Scanner;
 
+import Member_Related_Functions.Member;
+import db.DBConnection;
+import Member_Related_Functions.Profile;
+
 public class Main {
-    // postgresql user credentials
-    static String url = "jdbc:postgresql://localhost:5432/FinalProject";
-    static String user = "postgres";
-    static String password = "d56988d6";
 
-    static Connection connection;
-    static Statement statement;
-
-    static Scanner scanner;
-
-    static Profile profile;
-    static Registration registration;
-
-    private static void userRegistration(String first_name, String last_name, String email, String phone,
-                                         String password, String gender) {
-        try {
-            statement = connection.createStatement();
-            String insertQuery = String.format("INSERT INTO Member (first_name, last_name, email, phone, password, gender) " +
-                    "VALUES ('%s', '%s', '%s', '%s', '%s', '%s');", first_name, last_name, email, phone, password, gender);
-            statement.executeUpdate(insertQuery);
-            System.out.println("=====Registration successful======");
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-    }
-
-    private static int userLogin(String email, String password) {
-        int member_id = 0;
-        try {
-            statement = connection.createStatement();
-            String query = String.format("SELECT * FROM Member WHERE email = '%s' AND password = '%s;", email, password);
-            ResultSet resultSet = statement.executeQuery(query);
-            member_id = resultSet.getInt("member_id");
-            System.out.println("=====Login successful======");
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-        return member_id;
-    }
-
-    private static void menuOptions() {
-        System.out.print("MENU OPTIONS\n");
-        System.out.println("1. New Profile Registration");
-        System.out.println("2. Login");
-        System.out.println("3. Exit Program");
-
-        System.out.print("Enter menu option: ");
-        int choice = scanner.nextInt();
-        int member_id;
-        switch (choice) {
-            case 1: // new profile registration
-                System.out.print("Enter first name: ");
-                String first_name = scanner.next();
-                System.out.print("Enter last name: ");
-                String last_name = scanner.next();
-                System.out.print("Enter email: ");
-                String email = scanner.next();
-                System.out.print("Enter phone: ");
-                String phone = scanner.next();
-                System.out.print("Enter password: ");
-                String password = scanner.next();
-                System.out.print("Enter gender: ");
-                String gender = scanner.next();
-                userRegistration(first_name, last_name, email, phone, password, gender);
-                break;
-            case 2: // login
-                System.out.print("Enter email: ");
-                String emailLogin = scanner.next();
-                System.out.print("Enter password: ");
-                String passwordLogin = scanner.next();
-                member_id = userLogin(emailLogin, passwordLogin);
-                profileOptions(member_id);
-                break;
-            case 3: // exit
-                return;
-        }
-    }
-
-    // logged in options
-    private static void profileOptions(int member_id) {
-        System.out.print("PROFILE OPTIONS\n");
-        System.out.println("1. Update Profile Information");
-        System.out.println("2. View Profile Information");
-        System.out.println("3. Logout");
-
-        System.out.print("Enter menu option: ");
-        int choice = scanner.nextInt();
-        switch (choice) {
-            case 1: // update information
-                profile.updateInformationDisplay(member_id);
-                break;
-            case 2: // view information
-                profile.viewInformationDisplay(member_id);
-                break;
-            case 3: // logout
-                break;
-
-        }
-    }
-
-
-
+    private static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
-        try {
-            Class.forName("org.postgresql.Driver");
-            connection = DriverManager.getConnection(url, user, password);
-            if(connection != null) {
-                System.out.print("Connected to the database");
-            } else {
-                System.out.print("Failed to make connection to the database");
-            }
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-        scanner = new Scanner(System.in);
-        menuOptions();
 
+        while (true) {
+            System.out.println("\n===== GYM SYSTEM =====");
+            System.out.println("1. Login");
+            System.out.println("2. Create New Member Account");
+            System.out.println("3. Exit");
+            System.out.print("Choose option: ");
+
+            int choice = scanner.nextInt();
+
+            switch (choice) {
+                case 1:
+                    int memberId = login();
+                    if (memberId > 0) {
+                        memberMenu(memberId);
+                    }
+                    break;
+
+                case 2:
+                    int newMemberId = Member.createMemberAccount();
+                    if (newMemberId > 0) {
+                        memberMenu(newMemberId);
+                    }
+                    break;
+
+                case 3:
+                    System.out.println("Goodbye!");
+                    return;
+
+                default:
+                    System.out.println("Invalid option.");
+            }
+        }
+    }
+
+    private static int login() {
+
+        scanner.nextLine(); // clear leftover newline
+
+        System.out.println("\n===== MEMBER LOGIN =====");
+        System.out.print("Enter email: ");
+        String email = scanner.nextLine().trim();
+
+        System.out.print("Enter password: ");
+        String password = scanner.nextLine().trim();
+
+        String sql =
+                "SELECT member_id, first_name, last_name, email, password " +
+                        "FROM member WHERE email = ? AND password = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, email);
+            stmt.setString(2, password);
+
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+
+                // Debugging: show DB values
+                String dbEmail = rs.getString("email");
+                String dbPass  = rs.getString("password");
+
+                System.out.println("DEBUG: DB email   = [" + dbEmail + "]");
+                System.out.println("DEBUG: DB password= [" + dbPass + "]");
+                System.out.println("DEBUG: You typed  = [" + email + "] / [" + password + "]");
+
+                int memberId = rs.getInt("member_id");
+                String name = rs.getString("first_name") + " " + rs.getString("last_name");
+
+                System.out.println("Welcome back, " + name + " (ID: " + memberId + ")");
+                return memberId;
+            }
+
+            System.out.println("Invalid email or password.");
+            return -1;
+
+        } catch (Exception e) {
+            System.out.println("Error during login: " + e.getMessage());
+            return -1;
+        }
+    }
+
+
+
+    private static void memberMenu(int memberId) {
+        while (true) {
+            System.out.println("\n===== MEMBER MENU =====");
+            System.out.println("1. View Dashboard");
+            System.out.println("2. Update Profile Info");
+            System.out.println("3. Manage Fitness Goals");
+            System.out.println("4. Health Metrics");
+            System.out.println("5. Logout");
+            System.out.print("Choose option: ");
+
+            int choice = scanner.nextInt();
+
+            switch (choice) {
+                case 1:
+                    Profile.viewDashboard(memberId);
+                    break;
+                case 2:
+                    Profile.updateInformationDisplay(memberId);
+                    break;
+                case 3:
+                    Profile.fitnessGoals(memberId);
+                    break;
+                case 4:
+                    Profile.healthMetrics(memberId);
+                    break;
+                case 5:
+                    System.out.println("Logging out...");
+                    return;
+                default:
+                    System.out.println("Invalid option.");
+            }
+        }
     }
 }

@@ -1,5 +1,6 @@
 import java.sql.*;
 import java.util.Scanner;
+import db.DBConnection;
 
 public class Profile {
     static Connection connection;
@@ -42,18 +43,18 @@ public class Profile {
                 break;
             case 4: // fitness goals
                 fitnessGoals(member_id);
-
                 break;
             case 5: // health metrics
                 healthMetrics(member_id);
+                break;
         }
     }
 
     // update email
-    private static void updateEmail(int member_id, String new_email) {
+    public static void updateEmail(int member_id, String new_email) {
         try {
             statement = connection.createStatement();
-            String updateQuery = String.format("UPDATE Member " +
+            String updateQuery = String.format("UPDATE member " +
                     "SET email = '%s' WHERE member_id = %d;", new_email, member_id);
             statement.executeUpdate(updateQuery);
             System.out.println("=====Email update successful======");
@@ -66,7 +67,7 @@ public class Profile {
     private static void updatePassword(int member_id, String new_password) {
         try {
             statement = connection.createStatement();
-            String updateQuery = String.format("UPDATE Member " +
+            String updateQuery = String.format("UPDATE member " +
                     "SET password = '%s' WHERE member_id = %d;", new_password, member_id);
             statement.executeUpdate(updateQuery);
             System.out.println("=====Password update successful======");
@@ -79,7 +80,7 @@ public class Profile {
     private static void updatePhone(int member_id, String new_phone) {
         try {
             statement = connection.createStatement();
-            String updateQuery = String.format("UPDATE Member " +
+            String updateQuery = String.format("UPDATE member " +
                     "SET phone = '%s' WHERE member_id = %d;", new_phone, member_id);
             statement.executeUpdate(updateQuery);
             System.out.println("=====Phone number update successful======");
@@ -128,7 +129,7 @@ public class Profile {
     private static void addFitnessGoals(int member_id, String goal_type, int target_weight, String start_date, String end_date, String status) {
         try {
             statement = connection.createStatement();
-            String insertQuery = String.format("INSERT INTO FitnessGoal (member_id, goal_type, target_weight, start_date, end_state, status)" +
+            String insertQuery = String.format("INSERT INTO fitnessgoal (member_id, goal_type, target_weight, start_date, end_state, status)" +
                     "VALUES ('%d', '%s', '%s', '%s', '%s');", member_id, goal_type, target_weight, start_date, end_date, status);
             statement.executeUpdate(insertQuery);
             System.out.println("=====Fitness goal insert successful======");
@@ -182,7 +183,7 @@ public class Profile {
     private static void updateGoalType(int member_id, String goal_type) {
         try {
             statement = connection.createStatement();
-            String updateQuery = String.format("UPDATE FitnessGoal " +
+            String updateQuery = String.format("UPDATE fitnessgoal " +
                     "SET goal_type = '%s' WHERE member_id = %d;", goal_type, member_id);
             statement.executeUpdate(updateQuery);
             System.out.println("=====Goal type update successful======");
@@ -194,7 +195,7 @@ public class Profile {
     private static void updateTargetWeight(int member_id, int target_weight) {
         try {
             statement = connection.createStatement();
-            String updateQuery = String.format("UPDATE FitnessGoal " +
+            String updateQuery = String.format("UPDATE fitnessgoal " +
                     "SET target_weight = '%d' WHERE member_id = %d;", target_weight, member_id);
             statement.executeUpdate(updateQuery);
             System.out.println("=====Target weight update successful======");
@@ -206,7 +207,7 @@ public class Profile {
     private static void updateStartDate(int member_id, String start_date) {
         try {
             statement = connection.createStatement();
-            String updateQuery = String.format("UPDATE FitnessGoal " +
+            String updateQuery = String.format("UPDATE fitnessgoal " +
                     "SET start_date = '%s' WHERE member_id = %d;", start_date, member_id);
             statement.executeUpdate(updateQuery);
             System.out.println("=====Start date update successful======");
@@ -218,7 +219,7 @@ public class Profile {
     private static void updateEndDate(int member_id, String end_date) {
         try {
             statement = connection.createStatement();
-            String updateQuery = String.format("UPDATE FitnessGoal " +
+            String updateQuery = String.format("UPDATE fitnessgoal " +
                     "SET end_date = '%s' WHERE member_id = %d;", end_date, member_id);
             statement.executeUpdate(updateQuery);
             System.out.println("=====End date update successful======");
@@ -230,7 +231,7 @@ public class Profile {
     private static void updateStatus(int member_id, String status) {
         try {
             statement = connection.createStatement();
-            String updateQuery = String.format("UPDATE FitnessGoal " +
+            String updateQuery = String.format("UPDATE fitnessgoal " +
                     "SET status = '%s' WHERE member_id = %d;", status, member_id);
             statement.executeUpdate(updateQuery);
             System.out.println("=====Status update successful======");
@@ -243,7 +244,6 @@ public class Profile {
 
 
     //================== HEALTH METRICS ==================
-
 
 
     private static void healthMetrics(int member_id) {
@@ -273,20 +273,108 @@ public class Profile {
     }
 
     private static void setHealthMetrics(int member_id, int weight, int heartrate, int bodyfat_percentage) {
-        try {
-            statement = connection.createStatement();
-            String insertQuery = String.format("INSERT INTO HealthMetrics (member_id, target_weight, start_date, end_state, status)" +
-                    "VALUES ('%d', '%s', '%s', '%s', '%s');", member_id, weight, heartrate, bodyfat_percentage);
-            statement.executeUpdate(insertQuery);
-            System.out.println("=====Health metric set successful======");
-        } catch  (Exception e) {
-            System.out.println(e);
+        try (Connection conn = DBConnection.getConnection();
+             Statement stmt = conn.createStatement()) {
+
+            String sql = String.format(
+                    "INSERT INTO healthmetrics (member_id, weight, heartrate, body_fat_percent) " +
+                            "VALUES (%d, %d, %d, %d);",
+                    member_id, weight, heartrate, bodyfat_percentage
+            );
+
+            stmt.executeUpdate(sql);
+            System.out.println("===== Health metrics inserted successfully =====");
+
+        } catch (Exception e) {
+            System.out.println("Error inserting health metrics: " + e.getMessage());
         }
     }
 
     private static void updateHealthMetrics(int member_id) {
+        System.out.println("WHAT HEALTH METRIC DO YOU WANT TO UPDATE?");
+        System.out.println("1. Update weight");
+        System.out.println("2. Update heartrate");
+        System.out.println("3. Update body fat %");
+        System.out.print("Select Option: ");
 
+        int choice = scanner.nextInt();
+        scanner.nextLine();
+
+        switch (choice) {
+            case 1:
+                System.out.print("Enter new weight: ");
+                int newWeight = scanner.nextInt();
+                scanner.nextLine();
+                updateWeight(member_id, newWeight);
+                break;
+
+            case 2:
+                System.out.print("Enter new heartrate: ");
+                int newHeartrate = scanner.nextInt();
+                scanner.nextLine();
+                updateHeartrate(member_id, newHeartrate);
+                break;
+
+            case 3:
+                System.out.print("Enter new body fat %: ");
+                int newBodyFat = scanner.nextInt();
+                scanner.nextLine();
+                updateBodyFat(member_id, newBodyFat);
+                break;
+        }
     }
+
+    private static void updateWeight(int member_id, int weight) {
+        try (Connection conn = DBConnection.getConnection();
+             Statement stmt = conn.createStatement()) {
+
+            String sql = String.format(
+                    "UPDATE healthmetrics SET weight = %d WHERE member_id = %d;",
+                    weight, member_id
+            );
+
+            stmt.executeUpdate(sql);
+            System.out.println("===== Weight updated =====");
+
+        } catch (Exception e) {
+            System.out.println("Error updating weight: " + e.getMessage());
+        }
+    }
+
+    private static void updateHeartrate(int member_id, int heartrate) {
+        try (Connection conn = DBConnection.getConnection();
+             Statement stmt = conn.createStatement()) {
+
+            String sql = String.format(
+                    "UPDATE healthmetrics SET heartrate = %d WHERE member_id = %d;",
+                    heartrate, member_id
+            );
+
+            stmt.executeUpdate(sql);
+            System.out.println("===== Heartrate updated =====");
+
+        } catch (Exception e) {
+            System.out.println("Error updating heartrate: " + e.getMessage());
+        }
+    }
+
+    private static void updateBodyFat(int member_id, int bodyFat) {
+        try (Connection conn = DBConnection.getConnection();
+             Statement stmt = conn.createStatement()) {
+
+            String sql = String.format(
+                    "UPDATE healthmetrics SET body_fat_percent = %d WHERE member_id = %d;",
+                    bodyFat, member_id
+            );
+
+            stmt.executeUpdate(sql);
+            System.out.println("===== Body Fat % updated =====");
+
+        } catch (Exception e) {
+            System.out.println("Error updating body fat: " + e.getMessage());
+        }
+    }
+
 
 
 
@@ -325,7 +413,7 @@ public class Profile {
 
         try {
             statement = connection.createStatement();
-            statement.executeQuery("SELECT * FROM Member WHERE member_id = " + member_id);
+            statement.executeQuery("SELECT * FROM member WHERE member_id = " + member_id);
             resultSet = statement.getResultSet();
             resultSetMetaData = resultSet.getMetaData();
             int colWidth = 30;
@@ -354,7 +442,7 @@ public class Profile {
 
         try {
             statement = connection.createStatement();
-            statement.executeQuery("SELECT * FROM FitnessGoal WHERE member_id = " + member_id);
+            statement.executeQuery("SELECT * FROM fitnessgoal WHERE member_id = " + member_id);
             resultSet = statement.getResultSet();
             resultSetMetaData = resultSet.getMetaData();
             int colWidth = 30;
@@ -379,31 +467,37 @@ public class Profile {
 
     private static void viewHealthMetrics(int member_id) {
         ResultSet resultSet;
-        ResultSetMetaData resultSetMetaData;
+        ResultSetMetaData meta;
 
-        try {
-            statement = connection.createStatement();
-            statement.executeQuery("SELECT * FROM HealthMetrics WHERE member_id = " + member_id);
-            resultSet = statement.getResultSet();
-            resultSetMetaData = resultSet.getMetaData();
-            int colWidth = 30;
+        try (Connection conn = DBConnection.getConnection();
+             Statement stmt = conn.createStatement()) {
+
+            resultSet = stmt.executeQuery(
+                    "SELECT * FROM healthmetrics WHERE member_id = " + member_id
+            );
+            meta = resultSet.getMetaData();
+
+            int colWidth = 25;
 
             System.out.println("\n");
-            for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++) {
-                System.out.printf("%-" + colWidth + "s ", resultSetMetaData.getColumnName(i));
+            for (int i = 1; i <= meta.getColumnCount(); i++) {
+                System.out.printf("%-" + colWidth + "s ", meta.getColumnName(i));
             }
-            while (resultSet.next()) {
-                System.out.printf("%-" + colWidth + "s ", resultSet.getInt("metric_id"));
-                System.out.printf("%-" + colWidth + "s ", resultSet.getString("weight"));
-                System.out.printf("%-" + colWidth + "s ", resultSet.getString("heartrate"));
-                System.out.printf("%-" + colWidth + "s ", resultSet.getString("body_fat_percentage"));
-                System.out.printf("%-" + colWidth + "s ", resultSet.getString("recorded_at"));
 
+            while (resultSet.next()) {
+                System.out.println();
+                System.out.printf("%-" + colWidth + "s ", resultSet.getInt("metric_id"));
+                System.out.printf("%-" + colWidth + "s ", resultSet.getInt("weight"));
+                System.out.printf("%-" + colWidth + "s ", resultSet.getInt("heartrate"));
+                System.out.printf("%-" + colWidth + "s ", resultSet.getInt("body_fat_percent"));
+                System.out.printf("%-" + colWidth + "s ", resultSet.getString("recorded_at"));
             }
+
         } catch (Exception e) {
-            System.out.println(e);
+            System.out.println("Error viewing metrics: " + e.getMessage());
         }
     }
+
 
 
 
