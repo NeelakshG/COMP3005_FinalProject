@@ -155,179 +155,173 @@ public class Profile {
     }
 
 
+    //do not ask for the goal id cuz thats serialized, the database keeps track of the numbers
     public static void fitnessGoals(int member_id) {
-        System.out.println("1. Add Fitness Goals");
-        System.out.println("2. Update Fitness Goals");
-        System.out.print("Select Option: ");
-        int  choice = scanner.nextInt();
-        scanner.nextLine();
+        System.out.println("\n===== FITNESS GOALS =====");
+        System.out.println("1. Add or Replace Fitness Goal");
+        System.out.println("2. Update Existing Fitness Goal");
+        System.out.print("Enter choice: ");
 
-        switch (choice) {
-            case 1: // add fitness goal
-                System.out.println("Enter goal id: ");
-                int goal_id = scanner.nextInt();
-                System.out.println("Enter goal type: ");
-                String goal_type = scanner.next();
-                scanner.nextLine();
-                System.out.println("Enter target weight: ");
-                int target_weight = scanner.nextInt();
-                scanner.nextLine();
-                System.out.println("Enter start date: ");
-                String start_date = scanner.next();
-                scanner.nextLine();
-                System.out.println("Enter end_date: ");
-                String end_date = scanner.next();
-                scanner.nextLine();
-                System.out.println("Enter status: ");
-                String status = scanner.next();
-                scanner.nextLine();
-                addFitnessGoals(goal_id, member_id, goal_type, target_weight, start_date, end_date, status);
-                break;
-            case 2: // update fitness goal
-                updateFitnessGoals(member_id);
-                break;
+        int choice = scanner.nextInt();
+
+        if (choice == 1) {
+            addOrReplaceFitnessGoal(member_id);
+        } else if (choice == 2) {
+            updateFitnessGoals(member_id);
+        } else {
+            System.out.println("Invalid choice.");
         }
     }
 
-    private static void addFitnessGoals(int goal_id,int member_id, String goal_type, int target_weight, String start_date, String end_date, String status) {
+
+    public static void addOrReplaceFitnessGoal(int member_id) {
+        scanner.nextLine(); // clean buffer
+
+        System.out.print("Enter goal type (e.g., cutting, bulking): ");
+        String goalType = scanner.nextLine();
+
+        System.out.print("Enter target weight: ");
+        String targetWeight = scanner.nextLine();
+
+        System.out.print("Enter start date (YYYY-MM-DD): ");
+        String startDate = scanner.nextLine();
+
+        System.out.print("Enter end date (YYYY-MM-DD): ");
+        String endDate = scanner.nextLine();
+
+        System.out.print("Enter status (e.g., active, paused): ");
+        String status = scanner.nextLine();
+
+        String sql = """
+        INSERT INTO fitnessgoal (member_id, goal_type, target_weight, start_date, end_date, status)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT (member_id)
+        DO UPDATE SET 
+            goal_type = EXCLUDED.goal_type,
+            target_weight = EXCLUDED.target_weight,
+            start_date = EXCLUDED.start_date,
+            end_date = EXCLUDED.end_date,
+            status = EXCLUDED.status;
+    """;
+
         try (Connection conn = DBConnection.getConnection();
-             Statement stmt = conn.createStatement()) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            String insertQuery = String.format(
-                    "INSERT INTO fitnessgoal (goal_id, member_id, goal_type, target_weight, start_date, end_date, status) " +
-                            "VALUES ('%d','%d', '%s', '%d', '%s', '%s', '%s');",
-                    goal_id, member_id, goal_type, target_weight, start_date, end_date, status
-            );
+            stmt.setInt(1, member_id);
+            stmt.setString(2, goalType);
+            stmt.setInt(3, Integer.parseInt(targetWeight));
+            stmt.setDate(4, java.sql.Date.valueOf(startDate));
+            stmt.setDate(5, java.sql.Date.valueOf(endDate));
+            stmt.setString(6, status);
 
-            System.out.println(insertQuery);
+            stmt.executeUpdate();
 
-            stmt.executeUpdate(insertQuery);
-            System.out.println("=====Fitness goal insert successful======");
-        } catch  (Exception e) {
-            System.out.println(e);
+            System.out.println("===== Fitness Goal Saved Successfully =====");
+
+        } catch (Exception e) {
+            System.out.println("Error saving fitness goal: " + e.getMessage());
         }
     }
 
     //=====UPDATE FITNESS GOALS
 
-    private static void updateFitnessGoals(int member_id) {
+    public static void updateFitnessGoals(int member_id) {
+        System.out.println("\n===== UPDATE FITNESS GOAL =====");
         System.out.println("1. Update goal type");
         System.out.println("2. Update target weight");
         System.out.println("3. Update start date");
         System.out.println("4. Update end date");
         System.out.println("5. Update status");
+        System.out.print("Select option: ");
 
         int choice = scanner.nextInt();
         scanner.nextLine();
 
         switch (choice) {
             case 1:
-                System.out.println("Enter goal type: ");
-                updateGoalType(member_id, scanner.nextLine());
+                System.out.print("Enter new goal type: ");
+                updateGoalField(member_id, "goal_type", scanner.nextLine());
                 break;
 
             case 2:
-                System.out.println("Enter target weight: ");
-                updateTargetWeight(member_id, scanner.nextInt());
-                scanner.nextLine();
+                System.out.print("Enter new target weight: ");
+                updateGoalField(member_id, "target_weight", scanner.nextLine());
                 break;
 
             case 3:
-                System.out.println("Enter start date (YYYY-MM-DD): ");
-                updateStartDate(member_id, scanner.nextLine());
+                System.out.print("Enter new start date (YYYY-MM-DD): ");
+                updateGoalField(member_id, "start_date", scanner.nextLine());
                 break;
 
             case 4:
-                System.out.println("Enter end date (YYYY-MM-DD): ");
-                updateEndDate(member_id, scanner.nextLine());
+                System.out.print("Enter new end date (YYYY-MM-DD): ");
+                updateGoalField(member_id, "end_date", scanner.nextLine());
                 break;
 
             case 5:
-                System.out.println("Enter status: ");
-                updateStatus(member_id, scanner.nextLine());
+                System.out.print("Enter new status: ");
+                updateGoalField(member_id, "status", scanner.nextLine());
                 break;
+
+            default:
+                System.out.println("Invalid option.");
         }
     }
 
-    private static void updateGoalType(int member_id, String goal_type) {
+    private static void updateGoalField(int member_id, String column, String value) {
+        String sql = "UPDATE fitnessgoal SET " + column + " = ? WHERE member_id = ?";
+
         try (Connection conn = DBConnection.getConnection();
-             Statement stmt = conn.createStatement()) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            String insertQuery = String.format(
-                    "UPDATE fitnessgoal SET goal_type = '%s' WHERE member_id = %d;",
-                    goal_type, member_id
-            );
+            if (column.equalsIgnoreCase("target_weight")) {
+                stmt.setInt(1, Integer.parseInt(value));
+            }
+            else if (column.equalsIgnoreCase("start_date") || column.equalsIgnoreCase("end_date")) {
+                stmt.setDate(1, java.sql.Date.valueOf(value));
+            }
+            else {
+                stmt.setString(1, value);
+            }
 
-            stmt.executeUpdate(insertQuery);
-            System.out.println("===== Goal type updated =====");
+            stmt.setInt(2, member_id);
+            stmt.executeUpdate();
+
+            System.out.println("===== Fitness Goal Updated =====");
+
         } catch (Exception e) {
-            System.out.println(e);
+            System.out.println("Error updating goal: " + e.getMessage());
         }
     }
 
-    private static void updateTargetWeight(int member_id, int target_weight) {
+
+
+    private static void viewFitnessGoal(int member_id) {
+        String sql = "SELECT * FROM fitnessgoal WHERE member_id = ?";
+
         try (Connection conn = DBConnection.getConnection();
-             Statement stmt = conn.createStatement()) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            String insertQuery = String.format(
-                    "UPDATE fitnessgoal SET target_weight = %d WHERE member_id = %d;",
-                    target_weight, member_id
-            );
+            stmt.setInt(1, member_id);
+            ResultSet rs = stmt.executeQuery();
 
-            stmt.executeUpdate(insertQuery);
-            System.out.println("===== Target weight updated =====");
+            System.out.println("\n===== CURRENT FITNESS GOAL =====");
+
+            if (rs.next()) {
+                System.out.printf("Goal Type:        %s\n", rs.getString("goal_type"));
+                System.out.printf("Target Weight:    %s\n", rs.getString("target_weight"));
+                System.out.printf("Start Date:       %s\n", rs.getString("start_date"));
+                System.out.printf("End Date:         %s\n", rs.getString("end_date"));
+                System.out.printf("Status:           %s\n", rs.getString("status"));
+            } else {
+                System.out.println("No fitness goal found.");
+            }
+
         } catch (Exception e) {
-            System.out.println(e);
+            System.out.println("Error viewing fitness goal: " + e.getMessage());
         }
     }
 
-    private static void updateStartDate(int member_id, String start_date) {
-        try (Connection conn = DBConnection.getConnection();
-             Statement stmt = conn.createStatement()) {
-
-            String insertQuery = String.format(
-                    "UPDATE fitnessgoal SET start_date = '%s' WHERE member_id = %d;",
-                    start_date, member_id
-            );
-
-            stmt.executeUpdate(insertQuery);
-            System.out.println("===== Start date updated =====");
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-    }
-
-    private static void updateEndDate(int member_id, String end_date) {
-        try (Connection conn = DBConnection.getConnection();
-             Statement stmt = conn.createStatement()) {
-
-            String insertQuery = String.format(
-                    "UPDATE fitnessgoal SET end_date = '%s' WHERE member_id = %d;",
-                    end_date, member_id
-            );
-
-            stmt.executeUpdate(insertQuery);
-            System.out.println("===== End date updated =====");
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-    }
-
-    private static void updateStatus(int member_id, String status) {
-        try (Connection conn = DBConnection.getConnection();
-             Statement stmt = conn.createStatement()) {
-
-            String insertQuery = String.format(
-                    "UPDATE fitnessgoal SET status = '%s' WHERE member_id = %d;",
-                    status, member_id
-            );
-
-            stmt.executeUpdate(insertQuery);
-            System.out.println("===== Status updated =====");
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-    }
 
     public static void healthMetrics(int member_id) {
         System.out.println("1. Log new health metrics");
@@ -504,6 +498,26 @@ public class Profile {
         }
     }
 
+    //classReg
+    public static void classRegistrationMenu(int member_id) {
+        System.out.println("\n===== CLASS REGISTRATION =====");
+        System.out.println("1. View Available Classes");
+        System.out.println("2. Register For a Class");
+        System.out.println("3. View my upcoming classes");
+
+        System.out.print("Choose: ");
+
+        int choice = scanner.nextInt();
+        scanner.nextLine();
+
+        if (choice == 1) ClassRegistration.viewAvailableClasses();
+        else if (choice == 2) ClassRegistration.registerForClass(member_id);
+        else if (choice == 3) ClassRegistration.viewMyClasses(member_id);
+        else System.out.println("Invalid option.");
+    }
+
+
+    //using the view made inthe schema to make the dashboard
     public static void viewDashboard(int member_id) {
 
         String sql = "SELECT * FROM memberdashboard WHERE member_id = ?";
@@ -523,8 +537,7 @@ public class Profile {
             System.out.printf("Member ID:          %d\n", rs.getInt("member_id"));
             System.out.printf("Name:               %s\n", rs.getString("member_name"));
             System.out.printf("Email:              %s\n", rs.getString("email"));
-            System.out.printf("Gender:              %s\n\n", rs.getString("gender"));
-
+            System.out.printf("Gender:             %s\n\n", safeString(rs, "gender"));
 
             System.out.println("----- Latest Health Metrics -----");
             System.out.printf("Latest Weight:      %s\n", safeNumber(rs, "latest_weight"));
@@ -534,12 +547,16 @@ public class Profile {
             System.out.println("----- Active Fitness Goal -----");
             System.out.printf("Goal Type:          %s\n", safeString(rs, "active_goal_type"));
             System.out.printf("Target Weight:      %s\n", safeString(rs, "active_goal_target"));
-            System.out.printf("Goal End Date:      %s\n\n", safeString(rs, "goal_end_date"));
+            System.out.printf("Goal Start Date:    %s\n", safeString(rs, "goal_start_date"));
+            System.out.printf("Goal End Date:      %s\n", safeString(rs, "goal_end_date"));
+            System.out.printf("Goal Status:        %s\n\n", safeString(rs, "goal_status"));
 
             System.out.println("----- Activity Summary -----");
             System.out.printf("Past Classes:       %d\n", rs.getInt("past_class_count"));
-            System.out.printf("Next PT Session:    %s\n",
-                    safeTimestamp(rs, "next_pt_session_date"));
+            System.out.printf("Upcoming Classes:   %d\n", rs.getInt("upcoming_class_count"));
+            System.out.printf("Total Classes:      %d\n", rs.getInt("total_class_count"));
+            System.out.printf("Next Class Date:    %s\n", safeDate(rs, "next_class_date"));
+            System.out.printf("Next PT Session:    %s\n", safeDate(rs, "next_pt_session_date"));
 
             System.out.println("===========================================================\n");
 
@@ -547,6 +564,7 @@ public class Profile {
             System.out.println("Error loading dashboard: " + e.getMessage());
         }
     }
+
 
     private static String safeString(ResultSet rs, String col) throws SQLException {
         String val = rs.getString(col);
@@ -558,9 +576,9 @@ public class Profile {
         return rs.wasNull() ? "—" : Integer.toString(num);
     }
 
-    private static String safeTimestamp(ResultSet rs, String col) throws SQLException {
-        Timestamp ts = rs.getTimestamp(col);
-        return (ts == null) ? "—" : ts.toString();
+    private static String safeDate(ResultSet rs, String col) throws SQLException {
+        Date d = rs.getDate(col);
+        return (d == null) ? "—" : d.toString();
     }
 
 
