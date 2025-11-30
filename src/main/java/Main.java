@@ -4,6 +4,7 @@ import java.util.Scanner;
 import Member_Related_Functions.Member;
 import db.DBConnection;
 import Member_Related_Functions.Profile;
+import Member_Related_Functions.PTSession;
 
 public class Main {
 
@@ -31,7 +32,7 @@ public class Main {
                 case 2:
                     int newMemberId = Member.createMemberAccount();
                     if (newMemberId > 0) {
-                        memberMenu(newMemberId);
+                        System.out.println("Account created! Please login.\n");
                     }
                     break;
 
@@ -45,6 +46,10 @@ public class Main {
         }
     }
 
+    //===========================================================
+    // LOGIN FUNCTION (FIXED)
+    //===========================================================
+
     private static int login() {
 
         scanner.nextLine(); // clear leftover newline
@@ -56,9 +61,10 @@ public class Main {
         System.out.print("Enter password: ");
         String password = scanner.nextLine().trim();
 
+        // Fixed select: use lowercase column names EXACTLY as in the database
         String sql =
                 "SELECT member_id, first_name, last_name, email, password " +
-                        "FROM member WHERE email = ? AND password = ?";
+                        "FROM member WHERE LOWER(email) = LOWER(?) AND password = ?";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -69,14 +75,6 @@ public class Main {
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-
-                // Debugging: show DB values
-                String dbEmail = rs.getString("email");
-                String dbPass  = rs.getString("password");
-
-                System.out.println("DEBUG: DB email   = [" + dbEmail + "]");
-                System.out.println("DEBUG: DB password= [" + dbPass + "]");
-                System.out.println("DEBUG: You typed  = [" + email + "] / [" + password + "]");
 
                 int memberId = rs.getInt("member_id");
                 String name = rs.getString("first_name") + " " + rs.getString("last_name");
@@ -95,6 +93,9 @@ public class Main {
     }
 
 
+    //===========================================================
+    // MEMBER MENU
+    //===========================================================
 
     private static void memberMenu(int memberId) {
         while (true) {
@@ -103,7 +104,10 @@ public class Main {
             System.out.println("2. Update Profile Info");
             System.out.println("3. Manage Fitness Goals");
             System.out.println("4. Health Metrics");
-            System.out.println("5. Logout");
+            System.out.println("5. Group Class Registration");
+            System.out.println("6. PT Session scheduling");
+
+            System.out.println("7. Logout");
             System.out.print("Choose option: ");
 
             int choice = scanner.nextInt();
@@ -122,6 +126,12 @@ public class Main {
                     Profile.healthMetrics(memberId);
                     break;
                 case 5:
+                    Profile.classRegistrationMenu(memberId);
+                    break;
+                case 6:
+                    PTSession.managePTSessions(memberId);
+                    break;
+                case 7:
                     System.out.println("Logging out...");
                     return;
                 default:
@@ -129,4 +139,5 @@ public class Main {
             }
         }
     }
+
 }
