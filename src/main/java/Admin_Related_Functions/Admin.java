@@ -282,11 +282,11 @@ public class Admin {
              ResultSet rs = stmt.executeQuery()) {
 
             System.out.println("\n===== ALL MAINTENANCE LOGS =====");
-            System.out.printf("%-10s %-20s %-10s %-10s %-10s %-20s %-10s\n", "Log Id", "Equipment Id", "Admin Id", "Issue Reported", "Report Date",
+            System.out.printf("%-10s %-20s %-10s %-20s %-20s %-20s %-10s\n", "Log Id", "Equipment Id", "Admin Id", "Issue Reported", "Report Date",
                     "Resolve Date", "Status");
 
             while (rs.next()) {
-                System.out.printf("%-10s %-20s %-10s %-10s %-10s %-20s %-10s\n",
+                System.out.printf("%-10s %-20s %-10s %-20s %-20s %-20s %-10s\n",
                         rs.getInt("log_id"),
                         rs.getInt("equipment_id"),
                         rs.getInt("admin_id"),

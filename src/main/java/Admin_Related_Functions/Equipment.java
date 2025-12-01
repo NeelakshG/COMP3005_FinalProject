@@ -76,11 +76,11 @@ public class Equipment {
              ResultSet rs = stmt.executeQuery()) {
 
             System.out.println("\n===== ALL EQUIPMENT =====");
-            System.out.printf("%-20s %-10s %-20s %-10s %-20s\n", "Equipment Id", "Room Id", "Name", "Type", "Operational Status");
+            System.out.printf("%-20s %-10s %-20s %-20s %-20s\n", "Equipment Id", "Room Id", "Name", "Type", "Operational Status");
 
             while (rs.next()) {
                 Integer room = rs.getObject("room_id", Integer.class);
-                System.out.printf("%-20d %-10s %20s %-10s %-20s\n",
+                System.out.printf("%-20d %-10s %-20s %-20s %-20s\n",
                         rs.getInt("equipment_id"),
                         room  == null ? "N/A" : room,
                         rs.getString("name"),
