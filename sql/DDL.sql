@@ -1,30 +1,3 @@
-not neel
-neelypeely223
-Online
-
-not neel
- changed the group name: 3005 final project. Edit Group — 2025-11-19 12:00 PM
-not neel
- started a call that lasted an hour. — 2025-11-19 12:01 PM
-not neel — 2025-11-19 12:03 PM
-https://docs.google.com/document/d/18jO63SFnj6gjn_ks-m3S2keHbn5kr0TFzZA4Z18LQw0/edit?usp=sharing
-Google Docs
-final project 3005
-celina — 2025-11-23 6:58 PM
-@EgoLapse are you done the er model
-EgoLapse — 2025-11-23 8:59 PM
-almost, not home rn will probably finish tmr morning
-not neel — 2025-11-24 2:22 PM
-any update?
-EgoLapse — 2025-11-24 4:16 PM
-done
-Image
-not neel — 2025-11-24 6:33 PM
-@EgoLapse its looking good and i can definitely start the SQL code now. I think it's missing  the relationship types though. Celina updated the doc so ill use that for reference when I code but do you think you could add that to the ER model?
-EgoLapse — 2025-11-24 8:27 PM
-yea i could
-not neel — 2025-11-25 7:32 PM
-here is the SQL code for the tables
 CREATE TABLE Member (
     member_id      SERIAL PRIMARY KEY,
     name           VARCHAR(100) NOT NULL,
