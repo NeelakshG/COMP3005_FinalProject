@@ -25,19 +25,19 @@ public class Trainer {
 
         // Check overlap with existing availability
         if (availabilityOverlap(trainerId, date, start, end)) {
-            System.out.println("❌ Overlaps with existing availability.");
+            System.out.println("Overlaps with existing availability.");
             return;
         }
 
         // Check overlap with PT sessions
         if (trainerPTOverlap(trainerId, date, start, end)) {
-            System.out.println("❌ Trainer already has a PT session then.");
+            System.out.println("Trainer already has a PT session then.");
             return;
         }
 
         // Check overlap with classes
         if (trainerClassOverlap(trainerId, date, start, end)) {
-            System.out.println("❌ Trainer has a class scheduled at that time.");
+            System.out.println("Trainer has a class scheduled at that time.");
             return;
         }
 
@@ -240,7 +240,7 @@ public class Trainer {
             ResultSet rs = stmt.executeQuery();
 
             if (!rs.next()) {
-                System.out.println("❌ Member not found. (Case-sensitive search)");
+                System.out.println("Member not found. (Case-sensitive search)");
                 return;
             }
 
@@ -251,7 +251,7 @@ public class Trainer {
             System.out.println("Phone: " + rs.getString("phone"));
             System.out.println("Gender: " + rs.getString("gender"));
 
-            // FITNESS GOAL
+            //fitness goals
             System.out.println("\n--- Latest Fitness Goal ---");
             if (rs.getString("latest_goal") != null) {
                 System.out.println("Goal: " + rs.getString("latest_goal"));
@@ -261,7 +261,7 @@ public class Trainer {
                 System.out.println("No fitness goals recorded.");
             }
 
-            // HEALTH METRICS
+            //health metrics
             System.out.println("\n--- Latest Health Metrics ---");
             if (rs.getString("latest_weight") != null) {
                 System.out.println("Weight: " + rs.getDouble("latest_weight"));
@@ -522,9 +522,5 @@ public class Trainer {
             System.out.println("Error: " + e.getMessage());
         }
     }
-
-
-
-
 }
 
