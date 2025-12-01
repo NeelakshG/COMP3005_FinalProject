@@ -1,6 +1,8 @@
 import java.sql.*;
 import java.util.Scanner;
 
+import Admin_Related_Functions.Admin;
+import Admin_Related_Functions.ClassManagement;
 import Member_Related_Functions.Member;
 import db.DBConnection;
 import Member_Related_Functions.Profile;
@@ -17,15 +19,16 @@ public class Main {
             System.out.println("\n===== GYM SYSTEM =====");
             System.out.println("1. Member Login");
             System.out.println("2. Trainer login");
-            System.out.println("3. Create New Member Account");
-            System.out.println("4. Exit");
+            System.out.println("3. Admin login");
+            System.out.println("4. Create New Member Account");
+            System.out.println("5. Exit");
             System.out.print("Choose option: ");
 
             int choice = scanner.nextInt();
 
             switch (choice) {
                 case 1:
-                    int memberId = login();
+                    int memberId = memberLogin();
                     if (memberId > 0) {
                         memberMenu(memberId);
                     }
@@ -37,18 +40,20 @@ public class Main {
                         trainerMenu(trainerId);
                     }
                     break;
-
-                case 3:
+                case 4:
                     int newMemberId = Member.createMemberAccount();
                     if (newMemberId > 0) {
                         System.out.println("Account created! Please login.\n");
                     }
                     break;
-
-                case 4:
+                case 3:
+                    int adminId = adminLogin();
+                    if (adminId >0) {
+                        adminMenu(adminId);
+                    }
+                case 5:
                     System.out.println("Goodbye!");
                     return;
-
                 default:
                     System.out.println("Invalid option.");
             }
@@ -59,7 +64,7 @@ public class Main {
     // LOGIN FUNCTION (FIXED)
     //===========================================================
 
-    private static int login() {
+    private static int memberLogin() {
 
         scanner.nextLine(); // clear leftover newline
 
@@ -70,7 +75,6 @@ public class Main {
         System.out.print("Enter password: ");
         String password = scanner.nextLine().trim();
 
-        // Fixed select: use lowercase column names EXACTLY as in the database
         String sql =
                 "SELECT member_id, first_name, last_name, email, password " +
                         "FROM member WHERE LOWER(email) = LOWER(?) AND password = ?";
@@ -125,12 +129,46 @@ public class Main {
                 return id;
             } else {
                 System.out.println("Invalid trainer ID or email.");
-                return null;
+                return -1;
             }
 
         } catch (Exception e) {
             System.out.println("Login error: " + e.getMessage());
-            return null;
+            return -1;
+        }
+    }
+
+    public static Integer adminLogin() {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter Admin ID: ");
+        int id = sc.nextInt();
+        sc.nextLine();
+
+        System.out.print("Enter Email: ");
+        String email = sc.nextLine();
+
+        String sql = "SELECT admin_id FROM administrativestaff WHERE admin_id = ? AND email = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+            stmt.setString(2, email);
+
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                System.out.println("Login successful. Welcome Admin!");
+                return id;
+            } else {
+                System.out.println("Invalid admin ID or email.");
+                return -1;
+            }
+
+        } catch (Exception e) {
+            System.out.println("Login error: " + e.getMessage());
+            return -1;
         }
     }
 
@@ -209,6 +247,44 @@ public class Main {
                 }
             }
         }
+
+    public static void adminMenu(int adminId) {
+        Scanner sc = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("\n===== ADMIN MENU =====");
+            System.out.println("1. Room Booking");              // Assign rooms for classes or PT sessions
+            System.out.println("2. Equipment Maintenance");      // Log and track issues
+            System.out.println("3. Class Management");           // Create classes, assign trainers, rooms, times
+            System.out.println("4. Logout");
+            System.out.print("Choose: ");
+
+            int choice = sc.nextInt();
+            sc.nextLine();
+
+            switch (choice) {
+                case 1:
+                    Admin.roomBookingMenu(adminId);
+                    break;
+
+                case 2:
+//                    Admin.equipmentMaintenanceMenu(adminId);
+                    break;
+
+                case 3:
+                    ClassManagement.classManagementMenu();
+                    break;
+
+                case 4:
+                    System.out.println("Logging out...");
+                    return;
+
+                default:
+                    System.out.println("Invalid option.");
+            }
+        }
+    }
+
     }
 
 
