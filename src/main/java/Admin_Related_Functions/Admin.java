@@ -282,11 +282,11 @@ public class Admin {
              ResultSet rs = stmt.executeQuery()) {
 
             System.out.println("\n===== ALL MAINTENANCE LOGS =====");
-            System.out.printf("%-10s %-10s %-10s %-10s %-10s %-10s %-10s\n", "Log Id", "Equipment Id", "Admin Id", "Issue Reported", "Report Date",
+            System.out.printf("%-10s %-20s %-10s %-10s %-10s %-20s %-10s\n", "Log Id", "Equipment Id", "Admin Id", "Issue Reported", "Report Date",
                     "Resolve Date", "Status");
 
             while (rs.next()) {
-                System.out.printf("%-10s %-10s %-10s %-10s %-10s %-10s %-10s\n",
+                System.out.printf("%-10s %-20s %-10s %-10s %-10s %-20s %-10s\n",
                         rs.getInt("log_id"),
                         rs.getInt("equipment_id"),
                         rs.getInt("admin_id"),
@@ -307,6 +307,7 @@ public class Admin {
 
         System.out.print("Equipment ID: ");
         int equipmentId = sc.nextInt();
+        sc.nextLine();
 
         System.out.print("Description of issue: ");
         String description = sc.nextLine();
@@ -314,10 +315,8 @@ public class Admin {
         System.out.print("Status (OPEN, IN_PROGRESS, COMPLETED): ");
         String logStatus = sc.nextLine();
 
-        String sql = """
-                INSERT INTO MaintenanceLog
-                (equipment_id, admin_id, issue_reported, log_status)
-""";
+        String sql = "INSERT INTO MaintenanceLog (equipment_id, admin_id, issue_reported, log_status) "
+                + "VALUES (?, ?, ?, ?);";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -328,7 +327,7 @@ public class Admin {
             stmt.setString(4, logStatus);
             stmt.executeUpdate();
 
-            System.out.println("✔ Maintenance issue added!");
+            System.out.println("Maintenance issue added!");
 
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
@@ -349,7 +348,7 @@ public class Admin {
                 UPDATE MaintenanceLog SET log_status = ?,
                                           admin_id = ?,
                                           resolve_date = CASE
-                                          WHEN ? = 'COMPLETED' THEN CURRENT_TIME
+                                          WHEN ? = 'COMPLETED' THEN CURRENT_DATE
                                           ELSE NULL
                                           END
                                           WHERE log_id = ?;""";
@@ -366,7 +365,7 @@ public class Admin {
             if (updated == 0) {
                 System.out.println("Maintenance record not found.");
             } else {
-                System.out.println("✔ Status updated successfully!");
+                System.out.println("Status updated successfully!");
             }
 
         } catch (Exception e) {
