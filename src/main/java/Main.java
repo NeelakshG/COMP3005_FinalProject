@@ -5,6 +5,7 @@ import Member_Related_Functions.Member;
 import db.DBConnection;
 import Member_Related_Functions.Profile;
 import Member_Related_Functions.PTSession;
+import Trainer_Related_Functions.Trainer;
 
 public class Main {
 
@@ -14,9 +15,10 @@ public class Main {
 
         while (true) {
             System.out.println("\n===== GYM SYSTEM =====");
-            System.out.println("1. Login");
-            System.out.println("2. Create New Member Account");
-            System.out.println("3. Exit");
+            System.out.println("1. Member Login");
+            System.out.println("2. Trainer login");
+            System.out.println("3. Create New Member Account");
+            System.out.println("4. Exit");
             System.out.print("Choose option: ");
 
             int choice = scanner.nextInt();
@@ -30,13 +32,20 @@ public class Main {
                     break;
 
                 case 2:
+                    int trainerId = trainerLogin();
+                    if (trainerId > 0) {
+                        trainerMenu(trainerId);
+                    }
+                    break;
+
+                case 3:
                     int newMemberId = Member.createMemberAccount();
                     if (newMemberId > 0) {
                         System.out.println("Account created! Please login.\n");
                     }
                     break;
 
-                case 3:
+                case 4:
                     System.out.println("Goodbye!");
                     return;
 
@@ -92,6 +101,40 @@ public class Main {
         }
     }
 
+    public static Integer trainerLogin() {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter Trainer ID: ");
+        int id = sc.nextInt();
+        sc.nextLine();
+
+        System.out.print("Enter Email: ");
+        String email = sc.nextLine();
+
+        String sql = "SELECT trainer_id FROM trainer WHERE trainer_id = ? AND email = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+            stmt.setString(2, email);
+
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                System.out.println("Login successful. Welcome Trainer!");
+                return id;
+            } else {
+                System.out.println("Invalid trainer ID or email.");
+                return null;
+            }
+
+        } catch (Exception e) {
+            System.out.println("Login error: " + e.getMessage());
+            return null;
+        }
+    }
+
+
 
     //===========================================================
     // MEMBER MENU
@@ -139,5 +182,42 @@ public class Main {
             }
         }
     }
+        public static void trainerMenu(int trainerId) {
+            Scanner sc = new Scanner(System.in);
 
-}
+            while (true) {
+                System.out.println("\n===== TRAINER MENU =====");
+                System.out.println("1. Set Availability");
+                System.out.println("2. View My Availability");
+                System.out.println("3. View available Rooms");
+                System.out.println("4. View My Schedule (PT + Classes)");
+                System.out.println("5. Member Lookup");
+                System.out.println("6. Logout");
+                System.out.print("Choose: ");
+
+                int choice = sc.nextInt();
+                sc.nextLine();
+
+                switch (choice) {
+                    case 1: Trainer.availabilityMenu(trainerId); break;
+                    case 2: Trainer.viewAvailability(trainerId); break;
+                    case 3: Trainer.viewAvailableRooms(); break;
+                    case 4: Trainer.viewTrainerSchedule(trainerId); break;
+                    case 5: Trainer.viewMemberProfile(); break;
+                    case 6: { return; }
+                    default: System.out.println("Invalid option");
+                }
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
