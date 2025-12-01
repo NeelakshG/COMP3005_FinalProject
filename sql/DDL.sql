@@ -1,26 +1,7 @@
 CREATE TABLE Member (
     member_id      SERIAL PRIMARY KEY,
-    name           VARCHAR(100) NOT NULL,
-    email          VARCHAR(100) UNIQUE NOT NULL,
-    phone          VARCHAR(20) UNIQUE,
-    gender         VARCHAR(20)
-Expand
-DDL.sql
-6 KB
-celina — 2025-11-28 1:02 PM
-i updated some of the attributes, check the doc over and revise it into the ER model and i’ll probably keep revising if necessary
-celina — Yesterday at 12:22 AM
-@EgoLapse not to be disrespectful but like you need to finish the er model based on the changes we’ve added and also implement the relationships. you have a simple task to do while neel and i are working on multiple and harder tasks. our deadline is monday and you have not updated us on the er model which shouldn’t be difficult whatsoever. this final project is worth 30% on our final and i don’t know about you but i want a good mark on this.
-not neel — Yesterday at 12:24 AM
-make sure to check out the rubric for the grading scheme, theres a couple things you gotta add
-not neel — Yesterday at 3:19 PM
-@EgoLapse hello? Me and celina have done 95% of the work and you don't even have the decency to respond. we are seriously thinking about kicking you out. lock in. The final is due soon and we still have to record.
-not neel — Yesterday at 5:21 PM
-@EgoLapse
-﻿
-CREATE TABLE Member (
-    member_id      SERIAL PRIMARY KEY,
-    name           VARCHAR(100) NOT NULL,
+    first_name           VARCHAR(100) NOT NULL,
+    last_name           VARCHAR(100) NOT NULL,
     email          VARCHAR(100) UNIQUE NOT NULL,
     phone          VARCHAR(20) UNIQUE,
     gender         VARCHAR(20)
