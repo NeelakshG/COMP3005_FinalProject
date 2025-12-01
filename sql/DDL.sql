@@ -30,6 +30,7 @@ CREATE TABLE Room (
 );
 
 
+
 CREATE TABLE Class (
     class_id   SERIAL PRIMARY KEY,
     name       VARCHAR(100) NOT NULL,
@@ -42,6 +43,10 @@ CREATE TABLE Class (
 
     CONSTRAINT class_time_check CHECK (start_time < end_time)
 );
+
+ALTER TABLE Class
+ADD CONSTRAINT unique_class_slot
+UNIQUE(trainer_id, room_id, date, start_time, end_time);
 
 
 CREATE TABLE FitnessGoal (
@@ -92,7 +97,7 @@ CREATE TABLE PTSession (
 CREATE TABLE TrainerAvailability (
     availability_id SERIAL PRIMARY KEY,
     trainer_id      INT REFERENCES Trainer(trainer_id) ON DELETE CASCADE,
-    day             VARCHAR(20) NOT NULL,
+    date            DATE NOT NULL,
     start_time      TIME NOT NULL,
     end_time        TIME NOT NULL,
 
@@ -124,10 +129,11 @@ CREATE INDEX idx_member_email
 ON Member(email);
 
 --view for user profile
+--view for user profile
 CREATE VIEW MemberDashboard AS
 SELECT
     m.member_id,
-    m.name AS member_name,
+    m.first_name || ' ' || m.last_name AS member_name,
     m.email,
 
     --latest health metrics
@@ -159,7 +165,6 @@ SELECT
 
 FROM Member m
 
---left join --> latest metric per member
 LEFT JOIN (
     SELECT DISTINCT ON (member_id) *
     FROM HealthMetrics
@@ -167,13 +172,46 @@ LEFT JOIN (
 ) hm_latest
 ON m.member_id = hm_latest.member_id
 
---the active goal
 LEFT JOIN (
     SELECT *
     FROM FitnessGoal
     WHERE status = 'active'
 ) fg_active
 ON m.member_id = fg_active.member_id;
+
+--view for class overview
+ CREATE OR REPLACE VIEW classoverview AS
+ SELECT
+     c.class_id,
+     c.name AS class_name,
+     c.date,
+     c.start_time,
+     c.end_time,
+     c.capacity,
+     t.name AS trainer_name,
+     r.name AS room_name
+ FROM class c
+ LEFT JOIN trainer t ON c.trainer_id = t.trainer_id
+ LEFT JOIN room r ON c.room_id = r.room_id
+ ORDER BY c.date, c.start_time;
+
+
+--member views what class they are in for the class registration
+ CREATE OR REPLACE VIEW memberclassview AS
+ SELECT
+     cr.registration_id,
+     cr.member_id,
+     c.name AS class_name,
+     c.date,
+     c.start_time,
+     c.end_time,
+     t.name AS trainer_name,
+     r.name AS room_name,
+     cr.registered_date
+ FROM classregistration cr
+ JOIN class c ON cr.class_id = c.class_id
+ JOIN trainer t ON c.trainer_id = t.trainer_id
+ JOIN room r ON c.room_id = r.room_id;
 
 --create function for trigger
 CREATE OR REPLACE FUNCTION prevent_trainer_overbooking()
@@ -202,44 +240,17 @@ BEGIN
 END;
 $$;
 
---view for class overview
- SELECT c.class_id,
-    c.name AS class_name,
-    c.date,
-    c.start_time,
-    c.end_time,
-    c.capacity,
-    t.name AS trainer_name,
-    r.name AS room_name
-   FROM class c
-     LEFT JOIN trainer t ON c.trainer_id = t.trainer_id
-     LEFT JOIN room r ON c.room_id = r.room_id
-  ORDER BY c.date, c.start_time;
-
---member views what class they are in for the class registration
- SELECT cr.registration_id,
-    cr.member_id,
-    c.name AS class_name,
-    c.date,
-    c.start_time,
-    c.end_time,
-    t.name AS trainer_name,
-    r.name AS room_name,
-    cr.registered_date
-   FROM classregistration cr
-     JOIN class c ON cr.class_id = c.class_id
-     JOIN trainer t ON c.trainer_id = t.trainer_id
-     JOIN room r ON c.room_id = r.room_id;
-
 --create trigger
 CREATE TRIGGER trg_prevent_trainer_overbooking
 BEFORE INSERT OR UPDATE ON PTSession
 FOR EACH ROW
 EXECUTE FUNCTION prevent_trainer_overbooking();
 
+
+--prevent double booking a room
 CREATE OR REPLACE FUNCTION public.prevent_room_overbooking()
- RETURNS trigger
- LANGUAGE plpgsql
+RETURNS trigger
+LANGUAGE plpgsql
 AS $function$
 BEGIN
     IF EXISTS (
@@ -247,7 +258,7 @@ BEGIN
         FROM PTSession ps
         WHERE ps.room_id = NEW.room_id
           AND ps.date = NEW.date
-          AND ps.session_id <> NEW.session_id   --ignore the current session
+          AND ps.session_id <> NEW.session_id
           AND (
                 NEW.start_time < ps.end_time
                 AND NEW.end_time > ps.start_time
@@ -260,4 +271,80 @@ BEGIN
 
     RETURN NEW;
 END;
-$function$
+$function$;
+
+--prevent trainer conflict between rooms
+CREATE OR REPLACE FUNCTION prevent_trainer_class_conflict()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM Class c
+        WHERE c.trainer_id = NEW.trainer_id
+          AND c.date = NEW.date
+          AND c.class_id <> NEW.class_id
+          AND NEW.start_time < c.end_time
+          AND NEW.end_time > c.start_time
+    ) THEN
+        RAISE EXCEPTION 'Trainer is already teaching another class.';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_trainer_class_conflict
+BEFORE INSERT OR UPDATE ON Class
+FOR EACH ROW
+EXECUTE FUNCTION prevent_trainer_class_conflict();
+
+-- prevent room conflicts between classes
+CREATE TRIGGER trg_prevent_room_overbooking
+BEFORE INSERT OR UPDATE ON PTSession
+FOR EACH ROW
+EXECUTE FUNCTION prevent_room_overbooking();
+
+--prevent trainer conflict between classes
+CREATE OR REPLACE FUNCTION prevent_trainer_class_conflict()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM Class c
+        WHERE c.trainer_id = NEW.trainer_id
+          AND c.date = NEW.date
+          AND c.class_id <> NEW.class_id
+          AND NEW.start_time < c.end_time
+          AND NEW.end_time > c.start_time
+    ) THEN
+        RAISE EXCEPTION 'Trainer is already teaching another class.';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_trainer_class_conflict
+BEFORE INSERT OR UPDATE ON Class
+FOR EACH ROW EXECUTE FUNCTION prevent_trainer_class_conflict();
+
+--//prevent room conflicts
+CREATE OR REPLACE FUNCTION prevent_room_class_conflict()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM Class c
+        WHERE c.room_id = NEW.room_id
+          AND c.date = NEW.date
+          AND c.class_id <> NEW.class_id
+          AND NEW.start_time < c.end_time
+          AND NEW.end_time > c.start_time
+    ) THEN
+        RAISE EXCEPTION 'Room is already booked for another class.';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_room_class_conflict
+BEFORE INSERT OR UPDATE ON Class
+FOR EACH ROW EXECUTE FUNCTION prevent_room_class_conflict();
+
+
