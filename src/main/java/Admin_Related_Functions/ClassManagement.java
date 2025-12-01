@@ -24,6 +24,7 @@ public class ClassManagement {
             System.out.println("4. Update Schedule");
             System.out.println("5. View All Classes");
             System.out.println("6. Back");
+            System.out.print("Choice: ");
 
             int choice = sc.nextInt();
             sc.nextLine();
