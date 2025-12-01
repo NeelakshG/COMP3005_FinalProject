@@ -107,20 +107,20 @@ public class ClassRegistration {
     }
 
     public static void viewMyClasses(int memberId) {
+
         String sql = """
         SELECT 
-            cr.registration_id,
+            c.class_id,
             c.name AS class_name,
             c.date,
             c.start_time,
             c.end_time,
-            t.name AS trainer_name,
-            r.name AS room_name,
-            cr.registered_date
+            t.name AS trainer,
+            r.name AS room
         FROM classregistration cr
-        JOIN class c ON cr.class_id = c.class_id
-        JOIN trainer t ON c.trainer_id = t.trainer_id
-        JOIN room r ON c.room_id = r.room_id
+        JOIN class c ON c.class_id = cr.class_id
+        JOIN trainer t ON t.trainer_id = c.trainer_id
+        JOIN room r ON r.room_id = c.room_id
         WHERE cr.member_id = ?
         ORDER BY c.date, c.start_time;
     """;
@@ -131,24 +131,28 @@ public class ClassRegistration {
             stmt.setInt(1, memberId);
             ResultSet rs = stmt.executeQuery();
 
-            System.out.println("\n===== YOUR REGISTERED CLASSES =====\n");
-            System.out.printf("%-5s %-18s %-12s %-10s %-10s %-15s %-10s\n",
-                    "ID", "Class Name", "Date", "Start", "End", "Trainer", "Room");
+            System.out.println("\n===== MY REGISTERED CLASSES =====");
+            System.out.printf("%-5s %-20s %-12s %-10s %-10s %-15s %-15s\n",
+                    "ID", "Class", "Date", "Start", "End", "Trainer", "Room");
 
             while (rs.next()) {
-                System.out.printf("%-18s %-12s %-10s %-10s %-15s %-10s\n",
+                System.out.printf("%-5d %-20s %-12s %-10s %-10s %-15s %-15s\n",
+                        rs.getInt("class_id"),
                         rs.getString("class_name"),
                         rs.getDate("date"),
                         rs.getTime("start_time"),
                         rs.getTime("end_time"),
-                        rs.getString("trainer_name"),
-                        rs.getString("room_name"));
+                        rs.getString("trainer"),
+                        rs.getString("room"));
             }
 
         } catch (Exception e) {
-            System.out.println("Error viewing your classes: " + e.getMessage());
+            System.out.println("Error loading classes: " + e.getMessage());
         }
     }
+
+
+
 
 
 }
