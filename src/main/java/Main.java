@@ -268,7 +268,7 @@ public class Main {
                     break;
 
                 case 2:
-//                    Admin.equipmentMaintenanceMenu(adminId);
+                    Admin.equipmentMaintenanceMenu(adminId);
                     break;
 
                 case 3:

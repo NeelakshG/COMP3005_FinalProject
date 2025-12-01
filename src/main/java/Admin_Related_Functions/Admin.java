@@ -248,7 +248,131 @@ public class Admin {
         }
     }
 
+    public static void equipmentMaintenanceMenu(int adminId) {
+        while (true) {
+            System.out.println("\n===== EQUIPMENT MAINTENANCE MENU =====");
+            System.out.println("1. View Equipment Menu");
+            System.out.println("2. View All Maintenance Issue Log");
+            System.out.println("3. Log Maintenance Issue");
+            System.out.println("4. Update Maintenance Operational Status");
+            System.out.println("5. Back");
+            System.out.print("Choose: ");
 
+            int choice = sc.nextInt();
+            sc.nextLine();
+
+            switch (choice) {
+                case 1 -> Equipment.equipmentMenu();
+                case 2 -> viewAllMaintenanceIssueLog();
+                case 3 -> logMaintenanceIssue(adminId);
+                case 4 -> updateMaintenanceStatus(adminId);
+                case 5 -> {
+                    return;
+                }
+                default -> System.out.println("Invalid option.");
+            }
+        }
+    }
+
+    public static void viewAllMaintenanceIssueLog() {
+        String sql = "SELECT log_id, equipment_id, admin_id, issue_reported, report_date, resolve_date, log_status FROM MaintenanceLog ORDER BY log_id";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            System.out.println("\n===== ALL MAINTENANCE LOGS =====");
+            System.out.printf("%-10s %-10s %-10s %-10s %-10s %-10s %-10s\n", "Log Id", "Equipment Id", "Admin Id", "Issue Reported", "Report Date",
+                    "Resolve Date", "Status");
+
+            while (rs.next()) {
+                System.out.printf("%-10s %-10s %-10s %-10s %-10s %-10s %-10s\n",
+                        rs.getInt("log_id"),
+                        rs.getInt("equipment_id"),
+                        rs.getInt("admin_id"),
+                        rs.getString("issue_reported"),
+                        rs.getString("report_date"),
+                        rs.getString("resolve_date"),
+                        rs.getString("log_status")
+                );
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error loading maintenance logs: " + e.getMessage());
+        }
+    }
+
+    public static void logMaintenanceIssue(int adminId) {
+        System.out.println("\n===== LOG MAINTENANCE ISSUE =====");
+
+        System.out.print("Equipment ID: ");
+        int equipmentId = sc.nextInt();
+
+        System.out.print("Description of issue: ");
+        String description = sc.nextLine();
+
+        System.out.print("Status (OPEN, IN_PROGRESS, COMPLETED): ");
+        String logStatus = sc.nextLine();
+
+        String sql = """
+                INSERT INTO MaintenanceLog
+                (equipment_id, admin_id, issue_reported, log_status)
+""";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, equipmentId);
+            stmt.setInt(2, adminId);
+            stmt.setString(3, description);
+            stmt.setString(4, logStatus);
+            stmt.executeUpdate();
+
+            System.out.println("✔ Maintenance issue added!");
+
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    public static void updateMaintenanceStatus(int adminId) {
+        System.out.println("\n===== UPDATE MAINTENANCE STATUS =====");
+
+        System.out.print("Maintenance Log ID: ");
+        int maintenanceId = sc.nextInt();
+        sc.nextLine();
+
+        System.out.print("New status (OPEN, IN_PROGRESS, COMPLETED): ");
+        String new_status = sc.nextLine().toUpperCase();
+
+        String sql = """
+                UPDATE MaintenanceLog SET log_status = ?,
+                                          admin_id = ?,
+                                          resolve_date = CASE
+                                          WHEN ? = 'COMPLETED' THEN CURRENT_TIME
+                                          ELSE NULL
+                                          END
+                                          WHERE log_id = ?;""";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, new_status);
+            stmt.setInt(2, adminId);
+            stmt.setString(3, new_status);
+            stmt.setInt(4, maintenanceId);
+
+            int updated = stmt.executeUpdate();
+            if (updated == 0) {
+                System.out.println("Maintenance record not found.");
+            } else {
+                System.out.println("✔ Status updated successfully!");
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error updating maintenance: " + e.getMessage());
+        }
+    }
 
 }
 
