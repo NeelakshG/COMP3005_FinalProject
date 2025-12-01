@@ -213,12 +213,9 @@ ON m.member_id = fg_active.member_id;
  JOIN trainer t ON c.trainer_id = t.trainer_id
  JOIN room r ON c.room_id = r.room_id;
 
---create function for trigger
+-- FUNCTION: prevent trainer double-booking in PT sessions
 CREATE OR REPLACE FUNCTION prevent_trainer_overbooking()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-AS
-$$
+RETURNS TRIGGER AS $$
 BEGIN
     IF EXISTS (
         SELECT 1
@@ -226,32 +223,28 @@ BEGIN
         WHERE ps.trainer_id = NEW.trainer_id
           AND ps.date = NEW.date
           AND ps.session_id <> NEW.session_id
-          AND (
-                NEW.start_time < ps.end_time
-                AND NEW.end_time > ps.start_time
-              )
+          AND NEW.start_time < ps.end_time
+          AND NEW.end_time > ps.start_time
     ) THEN
         RAISE EXCEPTION
-            'Trainer % is already booked on % during that time.',
+            'Trainer % is already booked for another PT session on %.',
             NEW.trainer_id, NEW.date;
     END IF;
 
     RETURN NEW;
 END;
-$$;
+$$ LANGUAGE plpgsql;
 
---create trigger
+-- TRIGGER
 CREATE TRIGGER trg_prevent_trainer_overbooking
 BEFORE INSERT OR UPDATE ON PTSession
 FOR EACH ROW
 EXECUTE FUNCTION prevent_trainer_overbooking();
 
 
---prevent double booking a room
-CREATE OR REPLACE FUNCTION public.prevent_room_overbooking()
-RETURNS trigger
-LANGUAGE plpgsql
-AS $function$
+-- FUNCTION: prevent room double-booking for PT sessions
+CREATE OR REPLACE FUNCTION prevent_room_overbooking()
+RETURNS TRIGGER AS $$
 BEGIN
     IF EXISTS (
         SELECT 1
@@ -259,21 +252,26 @@ BEGIN
         WHERE ps.room_id = NEW.room_id
           AND ps.date = NEW.date
           AND ps.session_id <> NEW.session_id
-          AND (
-                NEW.start_time < ps.end_time
-                AND NEW.end_time > ps.start_time
-              )
+          AND NEW.start_time < ps.end_time
+          AND NEW.end_time > ps.start_time
     ) THEN
         RAISE EXCEPTION
-            'Room % is already booked on % during that time.',
+            'Room % is already booked for a PT session on %.',
             NEW.room_id, NEW.date;
     END IF;
 
     RETURN NEW;
 END;
-$function$;
+$$ LANGUAGE plpgsql;
 
---prevent trainer conflict between rooms
+-- TRIGGER
+CREATE TRIGGER trg_prevent_room_overbooking
+BEFORE INSERT OR UPDATE ON PTSession
+FOR EACH ROW
+EXECUTE FUNCTION prevent_room_overbooking();
+
+--prevent trainer conflict between class
+-- FUNCTION: prevent a trainer from teaching two classes at the same time
 CREATE OR REPLACE FUNCTION prevent_trainer_class_conflict()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -286,65 +284,41 @@ BEGIN
           AND NEW.start_time < c.end_time
           AND NEW.end_time > c.start_time
     ) THEN
-        RAISE EXCEPTION 'Trainer is already teaching another class.';
+        RAISE EXCEPTION 'Trainer % is already teaching another class at this time.', NEW.trainer_id;
     END IF;
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
+-- TRIGGER
 CREATE TRIGGER trg_trainer_class_conflict
 BEFORE INSERT OR UPDATE ON Class
 FOR EACH ROW
 EXECUTE FUNCTION prevent_trainer_class_conflict();
 
--- prevent room conflicts between classes
-CREATE TRIGGER trg_prevent_room_overbooking
-BEFORE INSERT OR UPDATE ON PTSession
-FOR EACH ROW
-EXECUTE FUNCTION prevent_room_overbooking();
-
---prevent trainer conflict between classes
-CREATE OR REPLACE FUNCTION prevent_trainer_class_conflict()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF EXISTS (
-        SELECT 1 FROM Class c
-        WHERE c.trainer_id = NEW.trainer_id
-          AND c.date = NEW.date
-          AND c.class_id <> NEW.class_id
-          AND NEW.start_time < c.end_time
-          AND NEW.end_time > c.start_time
-    ) THEN
-        RAISE EXCEPTION 'Trainer is already teaching another class.';
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_trainer_class_conflict
-BEFORE INSERT OR UPDATE ON Class
-FOR EACH ROW EXECUTE FUNCTION prevent_trainer_class_conflict();
-
---//prevent room conflicts
+-- FUNCTION: prevent a room from being used by two classes at the same time
 CREATE OR REPLACE FUNCTION prevent_room_class_conflict()
 RETURNS TRIGGER AS $$
 BEGIN
     IF EXISTS (
-        SELECT 1 FROM Class c
+        SELECT 1
+        FROM Class c
         WHERE c.room_id = NEW.room_id
           AND c.date = NEW.date
           AND c.class_id <> NEW.class_id
           AND NEW.start_time < c.end_time
           AND NEW.end_time > c.start_time
     ) THEN
-        RAISE EXCEPTION 'Room is already booked for another class.';
+        RAISE EXCEPTION 'Room % is already booked for another class at this time.', NEW.room_id;
     END IF;
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
+-- TRIGGER
 CREATE TRIGGER trg_room_class_conflict
 BEFORE INSERT OR UPDATE ON Class
-FOR EACH ROW EXECUTE FUNCTION prevent_room_class_conflict();
-
-
+FOR EACH ROW
+EXECUTE FUNCTION prevent_room_class_conflict();
