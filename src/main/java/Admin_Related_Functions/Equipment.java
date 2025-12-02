@@ -15,6 +15,7 @@ public class Equipment {
             System.out.println("2. View Equipment");
             System.out.println("3. Update Equipment Status");
             System.out.println("4. Back");
+            System.out.print("Choose: ");
 
             int choice = sc.nextInt();
             sc.nextLine();
@@ -108,7 +109,7 @@ public class Equipment {
             if(new_status.equals("OPERATIONAL") || new_status.equals("MAINTENANCE_REQUIRED")) {
                 String sql = """
                 UPDATE Equipment SET operational_status = ?
-                WHERE equipmment_id = ?
+                WHERE equipment_id = ?
                 """;
 
                 try (Connection conn = DBConnection.getConnection();
