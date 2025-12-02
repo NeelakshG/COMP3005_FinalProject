@@ -3,7 +3,7 @@ Celina Yang - 101299938 <br>
 Neelaksh Gupta - 101306593
 
 ## Video Demo Link
-
+https://youtu.be/3P8A9_xEF48
 
 ## Installation
 1. Install PostgreSQL if not already installed
