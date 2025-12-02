@@ -1,6 +1,6 @@
 # COMP3005 Final Project: Health and Fitness Club Management System
 Celina Yang - 101299938 <br>
-Neelaksh Gupta - #########
+Neelaksh Gupta - 101306593
 
 ## Video Demo Link
 
