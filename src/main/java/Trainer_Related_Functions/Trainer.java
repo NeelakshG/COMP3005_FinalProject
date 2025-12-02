@@ -23,11 +23,6 @@ public class Trainer {
         System.out.print("End time (HH:MM): ");
         Time end = Time.valueOf(sc.nextLine() + ":00");
 
-        // Check overlap with existing availability
-        if (availabilityOverlap(trainerId, date, start, end)) {
-            System.out.println("Overlaps with existing availability.");
-            return;
-        }
 
         // Check overlap with PT sessions
         if (trainerPTOverlap(trainerId, date, start, end)) {
@@ -89,9 +84,12 @@ public class Trainer {
 
     private static boolean availabilityOverlap(int trainerId, Date date, Time start, Time end) {
         String sql = """
-        SELECT 1 FROM traineravailability
-        WHERE trainer_id = ? AND date = ?
-        AND (? < end_time AND ? > start_time)
+        SELECT 1
+        FROM traineravailability
+        WHERE trainer_id = ?
+          AND date = ?
+          AND start_time <= ?
+          AND end_time >= ?
         LIMIT 1;
     """;
 
@@ -100,15 +98,16 @@ public class Trainer {
 
             stmt.setInt(1, trainerId);
             stmt.setDate(2, date);
-            stmt.setTime(3, end);
-            stmt.setTime(4, start);
+            stmt.setTime(3, start);
+            stmt.setTime(4, end);
 
             return stmt.executeQuery().next();
-
         } catch (Exception e) {
-            return true;
+            return false;
         }
     }
+
+
 
     private static boolean trainerClassOverlap(int trainerId, Date date, Time start, Time end) {
         String sql = """
@@ -325,6 +324,12 @@ public class Trainer {
         scanner.nextLine();
 
         // Prevent conflicts
+        // Trainer must be available
+        if (!availabilityOverlap(trainerId, date, start, end)) {
+            System.out.println("Trainer is NOT available at this time.");
+            return;
+        }
+
         if (trainerPTOverlap(trainerId, date, start, end)) {
             System.out.println("Overlaps with a PT session");
             return;
@@ -335,10 +340,7 @@ public class Trainer {
             return;
         }
 
-        if (availabilityOverlap(trainerId, date, start, end)) {
-            System.out.println("Overlaps with availability slot");
-            return;
-        }
+
 
         String sql = """
         INSERT INTO class (name, trainer_id, room_id, date, start_time, end_time, capacity)
@@ -382,20 +384,25 @@ public class Trainer {
         int roomId = scanner.nextInt();
         scanner.nextLine();
 
+        // Trainer must be available
+        if (!availabilityOverlap(trainerId, date, start, end)) {
+            System.out.println("Trainer is NOT available at this time.");
+            return;
+        }
+
+// Must not overlap another PT session
         if (trainerPTOverlap(trainerId, date, start, end)) {
             System.out.println("Trainer already has a PT session");
             return;
         }
 
+// Must not overlap a class
         if (trainerClassOverlap(trainerId, date, start, end)) {
             System.out.println("Trainer has a class at that time");
             return;
         }
 
-        if (availabilityOverlap(trainerId, date, start, end)) {
-            System.out.println("Overlaps with availability window");
-            return;
-        }
+
 
         String sql = """
         INSERT INTO ptsession (member_id, trainer_id, room_id, date, start_time, end_time)
@@ -522,5 +529,8 @@ public class Trainer {
             System.out.println("Error: " + e.getMessage());
         }
     }
+
+
+
 }
 

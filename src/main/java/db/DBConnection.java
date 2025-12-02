@@ -5,7 +5,7 @@ import java.sql.*;
 //also good coding practice as we abstract the connection
 public class DBConnection {
 
-    static String URL = "jdbc:postgresql://localhost:5432/final_project";
+    static String URL = "jdbc:postgresql://localhost:5432/temp";
     static String USER = "postgres";
     static String PASSWORD = "St20050510!0";
 

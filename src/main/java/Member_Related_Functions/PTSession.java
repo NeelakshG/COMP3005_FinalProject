@@ -70,21 +70,10 @@ public class PTSession {
         int trainerId = scanner.nextInt();
         scanner.nextLine();
 
-        // Gym business hours
-        Time gymOpen = Time.valueOf("06:00:00");
-        Time gymClose = Time.valueOf("22:00:00");
-
         String sql = """
         SELECT date, start_time, end_time
-        FROM ptsession
+        FROM traineravailability
         WHERE trainer_id = ?
-
-        UNION ALL
-
-        SELECT date, start_time, end_time
-        FROM class
-        WHERE trainer_id = ?
-
         ORDER BY date, start_time;
     """;
 
@@ -92,51 +81,31 @@ public class PTSession {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, trainerId);
-            stmt.setInt(2, trainerId);
-
             ResultSet rs = stmt.executeQuery();
+
+            if (!rs.isBeforeFirst()) {
+                System.out.println("\nNo availability found.\n");
+                return;
+            }
 
             System.out.println("\n===== TRAINER AVAILABILITY =====\n");
 
-            java.util.Map<Date, java.util.List<Time[]>> map = new java.util.HashMap<>();
+            java.sql.Date currentDate = null;
 
             while (rs.next()) {
-                Date d = rs.getDate("date");
-                Time s = rs.getTime("start_time");
-                Time e = rs.getTime("end_time");
+                java.sql.Date date = rs.getDate("date");
+                Time start = rs.getTime("start_time");
+                Time end = rs.getTime("end_time");
 
-                map.computeIfAbsent(d, k -> new java.util.ArrayList<>())
-                        .add(new Time[]{s, e});
-            }
+                if (currentDate == null || !currentDate.equals(date)) {
+                    currentDate = date;
 
-            for (var entry : map.entrySet()) {
-                Date date = entry.getKey();
-                var list = entry.getValue();
-                list.sort(java.util.Comparator.comparing(t -> t[0]));
-
-                System.out.println("\nDate: " + date);
-                System.out.println("------------------------------");
-                System.out.printf("%-12s %-12s\n", "Start", "End");
-
-                Time currentStart = gymOpen;
-
-                for (Time[] interval : list) {
-                    Time bookedStart = interval[0];
-                    Time bookedEnd = interval[1];
-
-                    if (currentStart.before(bookedStart)) {
-                        System.out.printf("%-12s %-12s\n", currentStart, bookedStart);
-                    }
-
-                    if (bookedEnd.after(currentStart)) {
-                        currentStart = bookedEnd;
-                    }
+                    System.out.println("Date: " + date);
+                    System.out.println("------------------------------");
+                    System.out.printf("%-12s %-12s\n", "Start", "End");
                 }
 
-                // After last booking of the day
-                if (currentStart.before(gymClose)) {
-                    System.out.printf("%-12s %-12s\n", currentStart, gymClose);
-                }
+                System.out.printf("%-12s %-12s\n", start, end);
             }
 
         } catch (Exception e) {

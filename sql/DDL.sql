@@ -129,56 +129,73 @@ CREATE TABLE MaintenanceLog (
 CREATE INDEX idx_member_email
 ON Member(email);
 
---view for user profile
---view for user profile
-CREATE VIEW MemberDashboard AS
+CREATE OR REPLACE VIEW memberdashboard AS
 SELECT
     m.member_id,
-    m.first_name || ' ' || m.last_name AS member_name,
+    (m.first_name || ' ' || m.last_name) AS member_name,
+    m.gender AS gender,
     m.email,
 
-    --latest health metrics
+    -- Latest health metrics
     hm_latest.weight AS latest_weight,
     hm_latest.heartrate AS latest_heartrate,
     hm_latest.body_fat_percentage AS latest_bodyfat,
 
-    --active goal
+    -- Active fitness goal
     fg_active.goal_type AS active_goal_type,
     fg_active.target_weight AS active_goal_target,
+    fg_active.start_date AS goal_start_date,
     fg_active.end_date AS goal_end_date,
+    fg_active.status AS goal_status,
 
-    --past class count
+    -- Past class count
     (
         SELECT COUNT(*)
-        FROM ClassRegistration cr
-        JOIN Class c ON cr.class_id = c.class_id
+        FROM classregistration cr
+        JOIN class c ON cr.class_id = c.class_id
         WHERE cr.member_id = m.member_id
-        AND c.date < CURRENT_DATE
+          AND c.date < CURRENT_DATE
     ) AS past_class_count,
 
-    --next PT session date
+    -- Next PT session
     (
         SELECT MIN(ps.date)
-        FROM PTSession ps
+        FROM ptsession ps
         WHERE ps.member_id = m.member_id
-        AND ps.date >= CURRENT_DATE
+          AND ps.date >= CURRENT_DATE
     ) AS next_pt_session
 
-FROM Member m
+FROM member m
 
+-- Latest health metric per user
 LEFT JOIN (
-    SELECT DISTINCT ON (member_id) *
-    FROM HealthMetrics
-    ORDER BY member_id, recorded_at DESC
+    SELECT DISTINCT ON (hm.member_id)
+        hm.metric_id,
+        hm.member_id,
+        hm.weight,
+        hm.heartrate,
+        hm.body_fat_percentage,
+        hm.recorded_at
+    FROM healthmetrics hm
+    ORDER BY hm.member_id, hm.recorded_at DESC
 ) hm_latest
 ON m.member_id = hm_latest.member_id
 
+-- Active fitness goal
 LEFT JOIN (
-    SELECT *
-    FROM FitnessGoal
-    WHERE status = 'active'
+    SELECT
+        fg.goal_id,
+        fg.member_id,
+        fg.target_weight,
+        fg.start_date,
+        fg.end_date,
+        fg.status,
+        fg.goal_type
+    FROM fitnessgoal fg
+    WHERE fg.status = 'active'
 ) fg_active
 ON m.member_id = fg_active.member_id;
+
 
 --view for class overview
  CREATE OR REPLACE VIEW classoverview AS

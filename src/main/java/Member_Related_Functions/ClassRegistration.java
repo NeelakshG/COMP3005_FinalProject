@@ -8,8 +8,10 @@ public class ClassRegistration {
 
     private static Scanner scanner = new Scanner(System.in);
 
-    // Show all classes not full & in the future
+    //show all classes that are not full and not in the past
     public static void viewAvailableClasses() {
+
+        //sqlquery to pull classes with capacity count
         String sql = """
             SELECT c.class_id, c.name, c.date, c.start_time, c.end_time,
                    r.name AS room_name, c.capacity,
@@ -28,6 +30,7 @@ public class ClassRegistration {
             System.out.printf("%-5s %-15s %-12s %-10s %-10s %-12s %-8s %-10s\n",
                     "ID", "Name", "Date", "Start", "End", "Room", "Cap", "Enrolled");
 
+            //loopthroughresults
             while (rs.next()) {
                 System.out.printf("%-5d %-15s %-12s %-10s %-10s %-12s %-8d %-10d\n",
                         rs.getInt("class_id"),
@@ -45,18 +48,20 @@ public class ClassRegistration {
         }
     }
 
-    // Register for class
+    //register a member for a class
     public static void registerForClass(int member_id) {
 
         System.out.print("Enter class ID to register: ");
         int class_id = scanner.nextInt();
 
+        //sqlquery to check class capacity before inserting
         String capacityCheck = """
             SELECT capacity,
                    (SELECT COUNT(*) FROM classregistration WHERE class_id = ?) AS enrolled
             FROM class WHERE class_id = ?;
         """;
 
+        //sqlinsert to register class
         String insertSql = """
             INSERT INTO classregistration (member_id, class_id)
             VALUES (?, ?);
@@ -64,8 +69,9 @@ public class ClassRegistration {
 
         try (Connection conn = DBConnection.getConnection()) {
 
-            // Check capacity
+            //check if class exists and has space
             try (PreparedStatement stmt = conn.prepareStatement(capacityCheck)) {
+
                 stmt.setInt(1, class_id);
                 stmt.setInt(2, class_id);
 
@@ -79,13 +85,14 @@ public class ClassRegistration {
                 int capacity = rs.getInt("capacity");
                 int enrolled = rs.getInt("enrolled");
 
+                //classfullcheck
                 if (enrolled >= capacity) {
                     System.out.println("Class is full. Cannot register.");
                     return;
                 }
             }
 
-            // Try registering
+            //insertregistration
             try (PreparedStatement stmt = conn.prepareStatement(insertSql)) {
                 stmt.setInt(1, member_id);
                 stmt.setInt(2, class_id);
@@ -94,6 +101,8 @@ public class ClassRegistration {
                 System.out.println("Successfully registered for class!");
 
             } catch (SQLException ex) {
+
+                //checkforduplicateentry
                 if (ex.getMessage().contains("unique_class_signup")) {
                     System.out.println("You are already registered for this class.");
                 } else {
@@ -106,8 +115,10 @@ public class ClassRegistration {
         }
     }
 
+    //view all classes a member is registered for
     public static void viewMyClasses(int memberId) {
 
+        //sqlquery to get user classes joined with trainer and room
         String sql = """
         SELECT 
             c.class_id,
@@ -123,7 +134,7 @@ public class ClassRegistration {
         JOIN room r ON r.room_id = c.room_id
         WHERE cr.member_id = ?
         ORDER BY c.date, c.start_time;
-    """;
+        """;
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -135,6 +146,7 @@ public class ClassRegistration {
             System.out.printf("%-5s %-20s %-12s %-10s %-10s %-15s %-15s\n",
                     "ID", "Class", "Date", "Start", "End", "Trainer", "Room");
 
+            //loopthrough results and print class info
             while (rs.next()) {
                 System.out.printf("%-5d %-20s %-12s %-10s %-10s %-15s %-15s\n",
                         rs.getInt("class_id"),
@@ -150,9 +162,5 @@ public class ClassRegistration {
             System.out.println("Error loading classes: " + e.getMessage());
         }
     }
-
-
-
-
 
 }
