@@ -10,7 +10,7 @@ https://youtu.be/3P8A9_xEF48
 2. Install IntelliJ if not already installed
 
 ```bash
-git clone https://github.com/celinaayangg/COMP3005_FinalProject.git
+git clone https://github.com/neelakshgupta/COMP3005_FinalProject.git
 cd COMP3005_FinalProject
 ```
 
